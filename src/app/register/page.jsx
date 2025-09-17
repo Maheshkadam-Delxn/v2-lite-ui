@@ -1,13 +1,22 @@
-'use client';
+"use client";
+import React, { useState } from "react";
+import {
+  Mail,
+  Lock,
+  Phone,
+  Globe,
+  User,
+  Briefcase,
+  Building,
+  Shield,
+  Award,
+  ArrowRight,
+  AlertCircle
+} from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Phone, Globe, Key, ShieldCheck, User, Briefcase, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
-export default function RegisterPagePreview() {
-  const [showOTP, setShowOTP] = useState(false);
-  const [otp, setOtp] = useState(Array(6).fill(''));
+export default function SkyStructRegister() {
   const [role, setRole] = useState("");
   const [subRole, setSubRole] = useState("");
   const [formData, setFormData] = useState({
@@ -28,17 +37,7 @@ export default function RegisterPagePreview() {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleOtpChange = (index, value) => {
-    if (!/^\d?$/.test(value)) return;
-    const next = [...otp];
-    next[index] = value;
-    setOtp(next);
-    if (value && index < 5) {
-      const nextEl = document.getElementById(`otp-${index + 1}`);
-      if (nextEl) nextEl.focus();
-    }
+    if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -48,21 +47,18 @@ export default function RegisterPagePreview() {
     setSuccess("");
 
     try {
-      // Validate required fields
       if (!formData.name || !formData.email || !formData.phone_number || !formData.password || !role) {
         setError("All fields are required");
         setLoading(false);
         return;
       }
 
-      // If role is member, subRole is required
       if (role === "member" && !subRole) {
         setError("Sub-role is required for member");
         setLoading(false);
         return;
       }
 
-      // Prepare data for API
       const userData = {
         name: formData.name,
         email: formData.email,
@@ -72,26 +68,21 @@ export default function RegisterPagePreview() {
         memberRole: role === "member" ? subRole : null
       };
 
-      console.log("Sending registration data:", userData);
-
-      // Send registration request
       const response = await fetch("/api/auth/register", {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
       });
 
       const data = await response.json();
 
-      console.log(data);
-      
-
       if (data.success) {
-        setSuccess("Registration successful! Please verify your phone with OTP.");
-        // setShowOTP(true);
-        router.push("/login");
+        setSuccess("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
       } else {
         setError(data.error || "Registration failed");
       }
@@ -103,111 +94,124 @@ export default function RegisterPagePreview() {
     }
   };
 
-  // const handleOtpVerification = async () => {
-    
-  //   alert("OTP verification would be implemented here");
-  // };
+  const handleLoginClick = () => {
+    router.push("/login");
+  };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
-      {/* ===== LEFT: FORM (white) ===== */}
-      <div className="flex-1 flex items-center justify-center px-8 py-8 relative overflow-hidden">
-        {/* subtle left abstract */}
-        <div className="absolute -top-20 -left-10 w-56 h-56 bg-blue-50 rounded-full opacity-60 transform rotate-12 blur-xl" />
-        <div className="absolute bottom-4 left-8 w-40 h-40 bg-gradient-to-br from-blue-50 to-white rounded-full opacity-40 blur-lg" />
+    <div className="h-screen flex bg-slate-50 overflow-hidden">
+      {/* Left Side - Form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-4 relative">
+        {/* Background decorations */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-orange-50 rounded-full opacity-20 blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-slate-100 rounded-full opacity-30 blur-3xl translate-x-1/3 translate-y-1/3"></div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="relative z-10 w-full max-w-md"
-        >
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Create your account</h1>
-          <p className="text-sm text-gray-500 mb-6">
-            Secure your projects and collaborate with your team — quick signup with phone OTP.
-          </p>
+        <div className="w-full max-w-sm relative z-10">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center mr-3">
+                <Building className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <span className="text-xl font-bold text-slate-800">SkyStruct</span>
+                <span className="text-xs bg-orange-600 text-white px-2 py-1 rounded ml-2 font-bold">
+                  v2lite
+                </span>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-800 mb-2">
+              Join SkyStruct
+            </h1>
+            <p className="text-slate-600 text-sm">
+              Create your construction management account
+            </p>
+          </div>
 
-          {/* Error Message */}
+          {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-              {error}
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs">{error}</span>
             </div>
           )}
 
-          {/* Success Message */}
           {success && (
-            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
-              {success}
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
+              <Shield className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs">{success}</span>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-              <div className="flex items-center gap-3 px-4 py-3 border rounded-xl bg-white focus-within:ring-2 focus-within:ring-blue-500 shadow-sm">
-                <User className="w-5 h-5 text-gray-400" />
-                <input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400"
-                  placeholder="Jane Doe"
-                  aria-label="Full name"
-                  required
-                />
+          {/* Registration Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name & Email Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
+                    placeholder="John Doe"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
+                    placeholder="you@company.com"
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Email */}
+            {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-              <div className="flex items-center gap-3 px-4 py-3 border rounded-xl bg-white focus-within:ring-2 focus-within:ring-blue-500 shadow-sm">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400"
-                  placeholder="you@company.com"
-                  aria-label="Email address"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Role and Sub Role Container */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <div className="flex gap-3">
-                {/* Role Selection */}
-                <div className="flex-1 flex items-center gap-3 px-4 py-3 border rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500">
-                  <User className="w-5 h-5 text-gray-400" />
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Role</label>
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <select
-                    className="flex-1 bg-transparent outline-none text-gray-800 w-full"
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     required
+                    disabled={loading}
                   >
                     <option value="">Select role</option>
-                    <option value="superadmin">Superadmin</option>
+                    <option value="superadmin">Super Admin</option>
                     <option value="vendor">Vendor</option>
-                    <option value="member">Member</option>
+                    <option value="member">Team Member</option>
                   </select>
                 </div>
 
-                {/* Sub Role (only if Member is selected) */}
                 {role === "member" && (
-                  <div className="flex-1 flex items-center gap-3 px-4 py-3 border rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500">
-                    <Briefcase className="w-5 h-5 text-gray-400" />
+                  <div className="flex-1 relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <select
-                      className="flex-1 bg-transparent outline-none text-gray-800 w-full"
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none"
                       value={subRole}
                       onChange={(e) => setSubRole(e.target.value)}
                       required
+                      disabled={loading}
                     >
-                      <option value="">Select sub-role</option>
+                      <option value="">Specialty</option>
                       <option value="project-admin">Project Admin</option>
                       <option value="consultant">Consultant</option>
                       <option value="contractor">Contractor</option>
@@ -218,36 +222,37 @@ export default function RegisterPagePreview() {
               </div>
             </div>
 
-            {/* Phone */}
+            {/* Phone Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
-              <div className="flex gap-3">
-                <div className="flex items-center gap-2 px-3 py-3 border rounded-xl bg-white shadow-sm">
-                  <Globe className="w-5 h-5 text-gray-400" />
-                  <select 
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <select
                     name="countryCode"
                     value={formData.countryCode}
                     onChange={handleInputChange}
-                    className="bg-transparent outline-none text-gray-800"
+                    className="pl-8 pr-2 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none w-20"
+                    disabled={loading}
                   >
-                    <option value="+91">🇮🇳 +91</option>
-                    <option value="+1">🇺🇸 +1</option>
-                    <option value="+44">🇬🇧 +44</option>
-                    <option value="+61">🇦🇺 +61</option>
-                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+91">🇮🇳</option>
+                    <option value="+1">🇺🇸</option>
+                    <option value="+44">🇬🇧</option>
+                    <option value="+61">🇦🇺</option>
+                    <option value="+971">🇦🇪</option>
                   </select>
                 </div>
-                <div className="flex-1 flex items-center gap-3 px-4 py-3 border rounded-xl bg-white focus-within:ring-2 focus-within:ring-blue-500 shadow-sm">
-                  <Phone className="w-5 h-5 text-gray-400" />
+                <div className="flex-1 relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="tel"
                     name="phone_number"
                     value={formData.phone_number}
                     onChange={handleInputChange}
-                    className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
                     placeholder="98765 43210"
-                    aria-label="Phone number"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -255,204 +260,116 @@ export default function RegisterPagePreview() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="flex items-center gap-3 px-4 py-3 border rounded-xl bg-white focus-within:ring-2 focus-within:ring-blue-500 shadow-sm">
-                <Lock className="w-5 h-5 text-gray-400" />
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400"
+                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
                   placeholder="Create a strong password"
-                  aria-label="Password"
                   required
+                  disabled={loading}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Must include uppercase, lowercase, number, and special character
+              <p className="text-xs text-slate-500 mt-1">
+                Include uppercase, lowercase, number & special character
               </p>
             </div>
 
             {/* Register Button */}
-            <motion.button
+            <button
               type="submit"
               disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
-              className="w-full bg-gray-900 text-white py-3 rounded-xl font-semibold shadow-md hover:bg-gray-800 transition-all mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
             >
               {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Registering...
-                </>
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating Account...
+                </div>
               ) : (
-                'Register'
+                <div className="flex items-center justify-center">
+                  <span>Create Account</span>
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </div>
               )}
-            </motion.button>
+            </button>
           </form>
 
-          <div className="mt-5 text-sm text-gray-600 text-center">
-            Already have an account?{' '}
-            <a href="/auth/login" className="text-blue-600 font-semibold hover:underline">
-              Sign in
-            </a>
-          </div>
-
-          <div className="mt-4 text-xs text-gray-400 text-center">
-            By signing up you agree to our{' '}
-            <a href="/terms" className="underline text-gray-600">
-              Terms
-            </a>{' '}
-            &{' '}
-            <a href="/privacy" className="underline text-gray-600">
-              Privacy
-            </a>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* ===== RIGHT: DECORATIVE (blue) ===== */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-blue-600 to-blue-500 relative overflow-hidden px-6 py-8">
-        {/* Curved edge separator */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-blue-600 overflow-hidden">
-          <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-16 h-64 bg-blue-50 rounded-full"></div>
-        </div>
-        
-        {/* large background abstract shapes */}
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/6 rounded-full blur-2xl transform rotate-12" />
-        <div className="absolute -bottom-32 -left-32 w-[520px] h-[520px] bg-white/4 rounded-full blur-3xl" />
-        <div className="absolute right-8 top-8 w-56 h-56 bg-white/8 rounded-tl-[90px] rounded-br-[40px] transform rotate-12" />
-        <div className="absolute left-10 bottom-6 w-40 h-40 bg-white/6 rounded-full rotate-6" />
-
-        {/* animated subtle blob */}
-        <motion.div
-          animate={{ scale: [1, 1.08, 1] }}
-          transition={{ repeat: Infinity, duration: 7, ease: 'easeInOut' }}
-          className="absolute left-1/3 top-1/4 w-96 h-96 bg-gradient-to-tr from-white/8 to-white/6 rounded-full blur-2xl"
-        />
-
-        {/* Big platform logo & name (center-right, larger) */}
-        <motion.div
-          initial={{ opacity: 0, x: 24, scale: 0.98 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative z-10 flex items-center gap-6 pr-16"
-        >
-          <div className="w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-2xl">
-            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center text-white text-3xl font-extrabold shadow-inner">
-              S
-            </div>
-          </div>
-
-          <div className="text-white">
-            <h2 className="text-3xl font-extrabold leading-tight tracking-tight">SkyStruct</h2>
-            <p className="mt-2 text-blue-100 max-w-xs text-sm">
-              Build. Track. Deliver. A modern platform to manage construction projects & teams.
+          {/* Footer Links */}
+          <div className="mt-4 text-center">
+            <p className="text-slate-600 text-sm">
+              Already have an account?{" "}
+              <button
+                onClick={handleLoginClick}
+                className="text-orange-600 hover:text-orange-700 font-semibold"
+              >
+                Sign In
+              </button>
             </p>
-
-            <div className="mt-4 flex gap-2">
-              <div className="bg-white/10 px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow-sm flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> Secure by design
-              </div>
-              <div className="bg-white/10 px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow-sm">
-                Enterprise ready
-              </div>
-            </div>
           </div>
-        </motion.div>
 
-        {/* floating stat card - top-right */}
-        <motion.div
-          whileHover={{ y: -6 }}
-          className="absolute top-8 right-8 bg-white rounded-xl shadow-lg p-4 w-40"
-        >
-          <h3 className="text-xl font-bold text-gray-900">176.18</h3>
-          <p className="text-xs text-gray-500 mt-1">Active Users</p>
-        </motion.div>
-
-        {/* floating info card - bottom-left */}
-        <motion.div
-          whileHover={{ y: -6 }}
-          className="absolute bottom-10 left-10 bg-white rounded-xl shadow-lg p-4 w-60"
-        >
-          <div className="flex items-start gap-3">
-            <Key className="w-5 h-5 text-blue-600 mt-0.5" />
-            <div>
-              <p className="font-semibold text-gray-800 text-sm">Your data, your rules</p>
-              <p className="text-xs text-gray-500 mt-1">Client-side encryption & enterprise controls.</p>
-            </div>
+          <div className="mt-3 text-xs text-slate-500 text-center">
+            By creating an account you agree to our{" "}
+            <a href="#terms" className="text-slate-600 hover:underline">Terms</a>{" "}
+            and{" "}
+            <a href="#privacy" className="text-slate-600 hover:underline">Privacy Policy</a>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* ===== OTP Modal (shared theme) ===== */}
-      <AnimatePresence>
-        {showOTP && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ y: 12, scale: 0.98, opacity: 0 }}
-              animate={{ y: 0, scale: 1, opacity: 1 }}
-              exit={{ y: 12, scale: 0.98, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">S</div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Verify your phone</h3>
-                    <p className="text-xs text-gray-500">Enter the 6-digit code sent to your number</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowOTP(false)}
-                  className="text-sm text-gray-500 hover:underline"
-                >
-                  Cancel
-                </button>
-              </div>
+      {/* Right Side - Construction Theme */}
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-slate-800 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/image.jpeg"
+            alt="Construction site background"
+            fill
+            className="object-cover opacity-40"
+            quality={100}
+            priority
+          />
+        </div>
 
-              <div className="grid grid-cols-6 gap-2 mb-6">
-                {otp.map((v, i) => (
-                  <input
-                    key={i}
-                    id={`otp-${i}`}
-                    value={v}
-                    onChange={(e) => handleOtpChange(i, e.target.value)}
-                    className="w-12 h-12 text-center border rounded-lg shadow-sm text-lg font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
-                    inputMode="numeric"
-                    maxLength={1}
-                  />
-                ))}
-              </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800/70 via-slate-800/60 to-slate-900/80"></div>
 
-              <div className="space-y-3">
-                <motion.button
-                  onClick={handleOtpVerification}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-md hover:bg-blue-700 transition-all"
-                >
-                  Verify OTP
-                </motion.button>
+        <div className="relative z-10 text-center text-white max-w-md px-6">
+          <div className="w-16 h-16 bg-white/95 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto shadow-lg mb-6">
+            <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center">
+              <Building className="w-7 h-7 text-white" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Join SkyStruct</h2>
+          <p className="text-slate-200 text-lg mb-8">
+            Connect with construction professionals worldwide
+          </p>
 
-                <button
-                  className="w-full text-sm text-gray-600 hover:underline"
-                >
-                  Resend code
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div className="flex justify-center gap-3 mb-8">
+            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 border border-white/20">
+              <Shield className="w-4 h-4" />
+              Secure
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 border border-white/20">
+              <Award className="w-4 h-4" />
+              Trusted
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-orange-400">500+</div>
+              <div className="text-xs text-slate-300">Companies</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-orange-400">94%</div>
+              <div className="text-xs text-slate-300">Success Rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

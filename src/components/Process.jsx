@@ -33,7 +33,7 @@ const Process = () => {
   ];
 
   return (
-    <section id="process" className="py-20 bg-blue-50">
+    <section id="process" className="py-20 bg-orange-50">
       <div className="container mx-auto px-4">
         <motion.div 
           className="text-center mb-16"
@@ -50,7 +50,7 @@ const Process = () => {
         
         <div className="relative">
           {/* Main connecting line - perfectly centered */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-blue-200 transform -translate-x-1/2 hidden md:block" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-orange-200 transform -translate-x-1/2 hidden md:block" />
           
           <div className="space-y-20 md:space-y-0">
             {processSteps.map((step, index) => (
@@ -67,11 +67,11 @@ const Process = () => {
                   <>
                     <div className="md:w-5/12 md:pr-8 md:text-left order-2 md:order-1">
                       <motion.div 
-                        className="bg-white p-6 rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-shadow duration-300"
+                        className="bg-white p-6 rounded-xl shadow-md border border-orange-100 hover:shadow-lg transition-shadow duration-300"
                         whileHover={{ y: -5 }}
                       >
                         <div className="flex items-center justify-end mb-3">
-                          <span className="text-blue-500 font-bold text-sm bg-blue-50 px-3 py-1 rounded-full">
+                          <span className="text-orange-500 font-bold text-sm bg-orange-50 px-3 py-1 rounded-full">
                             STEP {step.step}
                           </span>
                         </div>
@@ -83,16 +83,16 @@ const Process = () => {
                     {/* Center Circle */}
                     <div className="flex items-center justify-center my-4 md:my-0 order-1 md:order-2 relative z-10">
                       {/* Horizontal connector line */}
-                      <div className="hidden md:block absolute -left-8 w-8 h-0.5 bg-blue-200" />
+                      <div className="hidden md:block absolute -left-8 w-8 h-0.5 bg-orange-200" />
                       
                       {/* Step circle */}
-                      <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg relative z-10 border-4 border-white">
+                      <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg relative z-10 border-4 border-white">
                         {step.step}
                       </div>
                       
                       {/* Mobile connecting line */}
                       {index < processSteps.length - 1 && (
-                        <div className="md:hidden absolute top-full h-8 w-0.5 bg-blue-200"></div>
+                        <div className="md:hidden absolute top-full h-8 w-0.5 bg-orange-200"></div>
                       )}
                     </div>
                     
@@ -107,27 +107,27 @@ const Process = () => {
                     {/* Center Circle */}
                     <div className="flex items-center justify-center my-4 md:my-0 order-1 md:order-2 relative z-10">
                       {/* Horizontal connector line */}
-                      <div className="hidden md:block absolute -right-8 w-8 h-0.5 bg-blue-200" />
+                      <div className="hidden md:block absolute -right-8 w-8 h-0.5 bg-orange-200" />
                       
                       {/* Step circle */}
-                      <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl shadow-lg relative z-10 border-4 border-white">
+                      <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg relative z-10 border-4 border-white">
                         {step.step}
                       </div>
                       
                       {/* Mobile connecting line */}
                       {index < processSteps.length - 1 && (
-                        <div className="md:hidden absolute top-full h-8 w-0.5 bg-blue-200"></div>
+                        <div className="md:hidden absolute top-full h-8 w-0.5 bg-orange-200"></div>
                       )}
                     </div>
                     
                     {/* Right side content (for odd steps) */}
                     <div className="md:w-5/12 md:pl-8 md:text-left order-3">
                       <motion.div 
-                        className="bg-white p-6 rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-shadow duration-300"
+                        className="bg-white p-6 rounded-xl shadow-md border border-orange-100 hover:shadow-lg transition-shadow duration-300"
                         whileHover={{ y: -5 }}
                       >
                         <div className="flex items-center justify-start mb-3">
-                          <span className="text-blue-500 font-bold text-sm bg-blue-50 px-3 py-1 rounded-full">
+                          <span className="text-orange-500 font-bold text-sm bg-orange-50 px-3 py-1 rounded-full">
                             STEP {step.step}
                           </span>
                         </div>

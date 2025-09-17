@@ -5,12 +5,12 @@ import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Header from './Header';
 import Hero from './Hero';
-import Services from './Services';
+// import Services from './Services';
 import Process from './Process';
 import Features from './Features';
 import Testimonials from './Testimonials';
 import Footer from './Footer';
-
+import SkyStructPricing from './SkyStructPricing ';
 const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
@@ -44,9 +44,10 @@ const LandingPage = () => {
       
       <main>
         <Hero />
-        <Services />
-        <Process />
         <Features />
+        {/* <Services /> */}
+        <SkyStructPricing/>
+        <Process />
         <Testimonials />
       </main>
       

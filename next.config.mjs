@@ -1,11 +1,38 @@
+// /** @type {import('next').NextConfig} */
+// const nextConfig = {
+//      async rewrites() {
+//     return [
+//       {
+//         source: '/api/:path*', // Incoming request pattern
+//         destination: 'http://localhost:3001/api/:path*', // Destination path
+//       }
+//     ];
+//   },
+// };
+
+// export default nextConfig;
+
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
-     async rewrites() {
+  async rewrites() {
     return [
       {
-        source: '/api/:path*', // Incoming request pattern
-        destination: 'http://localhost:3002/api/:path*', // Destination path
+        source: '/api/:path*',
+        destination: 'http://localhost:3001/api/:path*',
       }
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: 'http://localhost:3000' },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+        ],
+      },
     ];
   },
 };

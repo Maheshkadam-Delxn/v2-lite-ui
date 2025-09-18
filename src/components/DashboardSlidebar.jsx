@@ -108,7 +108,7 @@ const DashboardSlidebar = () => {
         },
         { 
           name: 'Schedule', 
-          path: '/admin/settigs/scheduleReport',
+          path: '/admin/settings/scheduleReport',
           icon: Clock
         }
       ]

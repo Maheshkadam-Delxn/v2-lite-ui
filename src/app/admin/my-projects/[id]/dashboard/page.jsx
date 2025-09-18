@@ -27,6 +27,7 @@ import {
   Eye,
   PieChart
 } from "lucide-react";
+import MyProjectHeader from "@/components/my-project/header";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -46,54 +47,8 @@ export default function DashboardPage() {
   return (
     <div className="h-screen bg-gray-50">
       {/* Top Navigation Bar */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <h1 className="text-xl font-bold text-gray-800">Granite Horizon</h1>
-          <nav className="flex space-x-1 bg-gray-100 rounded-xl p-1">
-            {[
-              { name: "Dashboard", icon: Home, tab: "overview" },
-              { name: "Project Resources", icon: Users, tab: "resources" },
-              { name: "Project Planning", icon: Calendar, tab: "planning" },
-              { name: "Payment", icon: CreditCard, tab: "payment" },
-              { name: "Work Order", icon: FileText, tab: "workorder" },
-              { name: "Inventory", icon: Package, tab: "inventory" },
-              { name: "Approvals", icon: CheckCircle, tab: "approvals" },
-              { name: "Reports", icon: BarChart3, tab: "reports" },
-            ].map(({ name, icon: Icon, tab }) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === tab
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-white"
-                }`}
-              >
-                <Icon size={16} />
-                <span>{name}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition">
-            <Mail size={20} className="text-gray-600" />
-          </button>
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition">
-            <Bell size={20} className="text-gray-600" />
-          </button>
-          <button className="p-2 rounded-lg hover:bg-gray-100 transition">
-            <Settings size={20} className="text-gray-600" />
-          </button>
-          <div className="w-px h-6 bg-gray-200"></div>
-          <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition">
-            <User size={18} className="text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">My Projects</span>
-          </button>
-        </div>
-      </header>
-
+      <MyProjectHeader />
+    
       {/* Main Content - Full Screen */}
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-8">Project Overview</h1>

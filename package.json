@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "debounce": "^2.2.0",
     "framer-motion": "^12.23.12",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "react": "19.1.0",

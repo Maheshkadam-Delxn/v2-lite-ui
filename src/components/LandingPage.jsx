@@ -3,14 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import Header from './Header';
-import Hero from './Hero';
-// import Services from './Services';
-import Process from './Process';
-import Features from './Features';
-import Testimonials from './Testimonials';
-import Footer from './Footer';
-import SkyStructPricing from './SkyStructPricing ';
+import Header from './landing/Header';
+import Hero from './landing/Hero';
+import Services from './landing./Services';
+import Process from './landing/Process';
+import Features from './landing/Features';
+import Testimonials from './landing/Testimonials';
+import Footer from './landing/Footer';
+import SkyStructPricing from './landing/SkyStructPricing ';
 const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
@@ -45,7 +45,7 @@ const LandingPage = () => {
       <main>
         <Hero />
         <Features />
-        {/* <Services /> */}
+          <Services />
         <SkyStructPricing/>
         <Process />
         <Testimonials />

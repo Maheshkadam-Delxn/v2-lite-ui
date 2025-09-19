@@ -853,6 +853,507 @@
 // };
 
 // export default SkyStructFeatures;
+// import React, { useState, useEffect } from 'react';
+// import { 
+//   Calendar, Users, FileText, BarChart3, Shield, Smartphone, 
+//   Zap, Globe, Clock, CheckCircle, ArrowRight, Play,
+//   Building, Hammer, HardHat, Truck, AlertTriangle, Target
+// } from 'lucide-react';
+
+// const SkyStructFeatures = () => {
+//   const [activeFeature, setActiveFeature] = useState(0);
+//   const [hoveredCard, setHoveredCard] = useState(null);
+
+//   const coreFeatures = [
+//     {
+//       icon: Calendar,
+//       title: "Smart Project Scheduling",
+//       description: "AI-powered scheduling that adapts to delays, weather, and resource availability in real-time.",
+//       metrics: "40% faster planning",
+//       color: "from-slate-600 to-slate-700",
+//       demo: "Interactive Gantt charts with drag-and-drop functionality"
+//     },
+//     {
+//       icon: Users,
+//       title: "Team Collaboration Hub",
+//       description: "Connect field teams, office staff, and stakeholders with instant communication and file sharing.",
+//       metrics: "78% better coordination",
+//       color: "from-orange-600 to-orange-700",
+//       demo: "Real-time chat, video calls, and progress updates"
+//     },
+//     {
+//       icon: FileText,
+//       title: "Document Management",
+//       description: "Centralized storage for blueprints, permits, contracts, and compliance documents with version control.",
+//       metrics: "65% less paperwork",
+//       color: "from-yellow-600 to-yellow-700",
+//       demo: "Cloud-based file system with mobile access"
+//     },
+//     {
+//       icon: BarChart3,
+//       title: "Advanced Analytics",
+//       description: "Real-time dashboards, predictive insights, and automated reporting for data-driven decisions.",
+//       metrics: "90% accurate forecasts",
+//       color: "from-green-600 to-green-700",
+//       demo: "Custom reports and performance metrics"
+//     },
+//     {
+//       icon: Shield,
+//       title: "Safety & Compliance",
+//       description: "Digital safety checklists, incident reporting, and compliance tracking to maintain zero accidents.",
+//       metrics: "99.2% safety score",
+//       color: "from-blue-600 to-blue-700",
+//       demo: "Automated safety protocols and alerts"
+//     },
+//     {
+//       icon: Smartphone,
+//       title: "Mobile-First Design",
+//       description: "Full functionality on any device with offline capabilities for jobsites without internet.",
+//       metrics: "100% field accessibility",
+//       color: "from-purple-600 to-purple-700",
+//       demo: "Native iOS and Android apps"
+//     }
+//   ];
+
+//   const additionalFeatures = [
+//     { icon: Building, title: "3D BIM Integration", description: "Seamless Building Information Modeling integration" },
+//     { icon: Hammer, title: "Equipment Tracking", description: "Real-time equipment location and maintenance" },
+//     { icon: HardHat, title: "Worker Management", description: "Certification tracking and skill management" },
+//     { icon: Truck, title: "Supply Chain", description: "Material delivery and inventory management" },
+//     { icon: AlertTriangle, title: "Risk Assessment", description: "Predictive risk analysis and mitigation" },
+//     { icon: Target, title: "Quality Control", description: "Automated quality checks and inspections" }
+//   ];
+
+//   useEffect(() => {
+//     const interval = setInterval(() => {
+//       setActiveFeature((prev) => (prev + 1) % coreFeatures.length);
+//     }, 4000);
+//     return () => clearInterval(interval);
+//   }, []);
+
+//   return (
+//     <div className="bg-gradient-to-b from-white to-slate-50 py-20">
+//       <div className="max-w-7xl mx-auto px-6">
+//         {/* Section Header */}
+//         <div className="text-center mb-16">
+//           <div className="inline-block bg-orange-100 text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold mb-4">
+//             Powerful Features
+//           </div>
+//           <h2 className="text-4xl font-bold text-slate-800 mb-6">
+//             Everything You Need to Build
+//             <span className="text-orange-600"> Successfully</span>
+//           </h2>
+//           <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+//             SkyStruct v2lite combines cutting-edge technology with construction expertise to deliver 
+//             a complete project management solution that grows with your business.
+//           </p>
+//         </div>
+
+//         {/* Core Features Grid */}
+//         <div className="grid lg:grid-cols-2 gap-12 mb-20">
+//           {/* Scrollable Feature Cards */}
+//           <div className="relative h-96 overflow-hidden">
+//             <div className="absolute inset-0 space-y-6">
+//               {coreFeatures.map((feature, index) => (
+//                 <div
+//                   key={index}
+//                   className={`absolute w-full transition-all duration-700 ease-in-out ${
+//                     index === activeFeature
+//                       ? 'opacity-100 translate-y-0 z-10'
+//                       : index < activeFeature
+//                         ? 'opacity-0 -translate-y-full z-0'
+//                         : 'opacity-0 translate-y-full z-0'
+//                   }`}
+//                   style={{
+//                     transform: `translateY(${(index - activeFeature) * 100}%)`
+//                   }}
+//                 >
+//                   <div className="relative group cursor-pointer">
+//                     <div className="p-8 rounded-xl bg-white shadow-lg border border-orange-200">
+//                       <div className="flex items-start space-x-6">
+//                         <div className={`p-4 rounded-xl bg-gradient-to-r ${feature.color} text-white shadow-lg`}>
+//                           <feature.icon className="w-8 h-8" />
+//                         </div>
+//                         <div className="flex-1">
+//                           <div className="flex items-center justify-between mb-3">
+//                             <h3 className="text-xl font-bold text-slate-800">{feature.title}</h3>
+//                             <div className="text-sm font-bold text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+//                               {feature.metrics}
+//                             </div>
+//                           </div>
+//                           <p className="text-slate-600 mb-4 text-lg leading-relaxed">{feature.description}</p>
+//                           <div className="flex items-center text-slate-500">
+//                             <Play className="w-5 h-5 mr-3" />
+//                             <span className="font-medium">{feature.demo}</span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     {/* Active indicator */}
+//                     <div className="absolute left-0 top-0 bottom-0 w-2 bg-orange-600 rounded-r" />
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+
+//             {/* Navigation Controls */}
+//             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-8">
+//               <div className="flex items-center justify-between">
+//                 <div className="flex space-x-2">
+//                   {coreFeatures.map((_, index) => (
+//                     <button
+//                       key={index}
+//                       className={`h-2 rounded-full transition-all duration-300 ${
+//                         activeFeature === index 
+//                           ? 'bg-orange-600 w-8' 
+//                           : 'bg-gray-300 w-2 hover:bg-gray-400'
+//                       }`}
+//                       onClick={() => setActiveFeature(index)}
+//                     />
+//                   ))}
+//                 </div>
+                
+//                 <div className="flex space-x-3">
+//                   <button
+//                     className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors duration-200 disabled:opacity-50"
+//                     onClick={() => setActiveFeature(Math.max(0, activeFeature - 1))}
+//                     disabled={activeFeature === 0}
+//                   >
+//                     <ArrowRight className="w-4 h-4 text-slate-600 rotate-180" />
+//                   </button>
+//                   <button
+//                     className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors duration-200 disabled:opacity-50"
+//                     onClick={() => setActiveFeature(Math.min(coreFeatures.length - 1, activeFeature + 1))}
+//                     disabled={activeFeature === coreFeatures.length - 1}
+//                   >
+//                     <ArrowRight className="w-4 h-4 text-slate-600" />
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Feature Counter */}
+//             <div className="absolute top-0 right-0 bg-orange-600 text-white px-4 py-2 rounded-bl-xl rounded-tr-xl">
+//               <span className="text-sm font-bold">
+//                 {String(activeFeature + 1).padStart(2, '0')} / {String(coreFeatures.length).padStart(2, '0')}
+//               </span>
+//             </div>
+//           </div>
+
+//           {/* Feature Demo Visualization */}
+//           <div className="relative">
+//             <div className="sticky top-8">
+//               <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 h-96">
+//                 <div className="text-center mb-6">
+//                   <h3 className="text-xl font-semibold text-slate-800 mb-2">
+//                     {coreFeatures[activeFeature].title}
+//                   </h3>
+//                   <div className="w-12 h-1 bg-orange-600 mx-auto rounded-full" />
+//                 </div>
+
+//                 {/* Dynamic Feature Visualization */}
+//                 <div className="relative h-64 bg-gradient-to-br from-slate-50 to-white rounded-lg border border-gray-100 overflow-hidden">
+//                   {/* Feature-specific demo content */}
+//                   {activeFeature === 0 && (
+//                     <div className="p-6 h-full">
+//                       <div className="space-y-4">
+//                         <div className="flex items-center justify-between text-sm">
+//                           <span className="text-slate-600">Foundation Work</span>
+//                           <span className="text-green-600 font-semibold">Completed</span>
+//                         </div>
+//                         <div className="w-full bg-gray-200 rounded-full h-2">
+//                           <div className="bg-green-600 h-2 rounded-full w-full"></div>
+//                         </div>
+                        
+//                         <div className="flex items-center justify-between text-sm">
+//                           <span className="text-slate-600">Structural Framework</span>
+//                           <span className="text-orange-600 font-semibold">In Progress</span>
+//                         </div>
+//                         <div className="w-full bg-gray-200 rounded-full h-2">
+//                           <div className="bg-orange-600 h-2 rounded-full w-3/4 transition-all duration-2000">
+//                             <div className="h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full animate-pulse"></div>
+//                           </div>
+//                         </div>
+                        
+//                         <div className="flex items-center justify-between text-sm">
+//                           <span className="text-slate-600">Electrical Installation</span>
+//                           <span className="text-slate-400 font-semibold">Scheduled</span>
+//                         </div>
+//                         <div className="w-full bg-gray-200 rounded-full h-2">
+//                           <div className="bg-slate-300 h-2 rounded-full w-1/4"></div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <Calendar className="w-8 h-8 text-orange-600 animate-bounce" />
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {activeFeature === 1 && (
+//                     <div className="p-6 h-full">
+//                       <div className="space-y-3">
+//                         <div className="flex items-center space-x-3 bg-green-50 p-3 rounded-lg">
+//                           <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+//                             <span className="text-white text-xs font-bold">JM</span>
+//                           </div>
+//                           <div className="flex-1">
+//                             <div className="text-sm font-semibold text-slate-800">John Martinez</div>
+//                             <div className="text-xs text-green-600">Site Supervisor - Online</div>
+//                           </div>
+//                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+//                         </div>
+                        
+//                         <div className="flex items-center space-x-3 bg-orange-50 p-3 rounded-lg">
+//                           <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+//                             <span className="text-white text-xs font-bold">SK</span>
+//                           </div>
+//                           <div className="flex-1">
+//                             <div className="text-sm font-semibold text-slate-800">Sarah Kim</div>
+//                             <div className="text-xs text-orange-600">Project Manager - Active</div>
+//                           </div>
+//                           <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+//                         </div>
+                        
+//                         <div className="bg-slate-50 p-3 rounded-lg">
+//                           <div className="text-xs text-slate-500 mb-1">Latest Update - 2 min ago</div>
+//                           <div className="text-sm text-slate-700">"Foundation inspection completed. Moving to next phase."</div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <Users className="w-8 h-8 text-orange-600 animate-pulse" />
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {activeFeature === 2 && (
+//                     <div className="p-6 h-full">
+//                       <div className="space-y-3">
+//                         <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+//                           <div className="flex items-center space-x-3">
+//                             <FileText className="w-5 h-5 text-blue-600" />
+//                             <div>
+//                               <div className="text-sm font-semibold text-slate-800">Site_Plans_v3.2.pdf</div>
+//                               <div className="text-xs text-slate-500">Updated 1 hour ago</div>
+//                             </div>
+//                           </div>
+//                           <CheckCircle className="w-5 h-5 text-green-600" />
+//                         </div>
+                        
+//                         <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+//                           <div className="flex items-center space-x-3">
+//                             <FileText className="w-5 h-5 text-yellow-600" />
+//                             <div>
+//                               <div className="text-sm font-semibold text-slate-800">Safety_Protocol.docx</div>
+//                               <div className="text-xs text-slate-500">Pending approval</div>
+//                             </div>
+//                           </div>
+//                           <Clock className="w-5 h-5 text-yellow-600" />
+//                         </div>
+                        
+//                         <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+//                           <div className="flex items-center space-x-3">
+//                             <FileText className="w-5 h-5 text-green-600" />
+//                             <div>
+//                               <div className="text-sm font-semibold text-slate-800">Materials_List.xlsx</div>
+//                               <div className="text-xs text-slate-500">Approved & Synced</div>
+//                             </div>
+//                           </div>
+//                           <CheckCircle className="w-5 h-5 text-green-600" />
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <FileText className="w-8 h-8 text-orange-600 animate-bounce" />
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {activeFeature === 3 && (
+//                     <div className="p-6 h-full">
+//                       <div className="grid grid-cols-2 gap-4 h-full">
+//                         <div className="bg-green-50 p-4 rounded-lg">
+//                           <div className="text-2xl font-bold text-green-600">94.2%</div>
+//                           <div className="text-sm text-slate-600">On-Time Delivery</div>
+//                           <div className="w-full bg-green-200 rounded-full h-1 mt-2">
+//                             <div className="bg-green-600 h-1 rounded-full" style={{width: '94.2%'}}></div>
+//                           </div>
+//                         </div>
+                        
+//                         <div className="bg-orange-50 p-4 rounded-lg">
+//                           <div className="text-2xl font-bold text-orange-600">$2.4M</div>
+//                           <div className="text-sm text-slate-600">Cost Savings</div>
+//                           <div className="text-xs text-green-600 mt-1">↗ 18% vs last quarter</div>
+//                         </div>
+                        
+//                         <div className="bg-blue-50 p-4 rounded-lg">
+//                           <div className="text-2xl font-bold text-blue-600">247</div>
+//                           <div className="text-sm text-slate-600">Active Projects</div>
+//                           <div className="text-xs text-blue-600 mt-1">↗ 12% growth</div>
+//                         </div>
+                        
+//                         <div className="bg-purple-50 p-4 rounded-lg">
+//                           <div className="text-2xl font-bold text-purple-600">98.7%</div>
+//                           <div className="text-sm text-slate-600">Quality Score</div>
+//                           <div className="text-xs text-green-600 mt-1">Industry leading</div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <BarChart3 className="w-8 h-8 text-orange-600 animate-pulse" />
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {activeFeature === 4 && (
+//                     <div className="p-6 h-full">
+//                       <div className="space-y-4">
+//                         <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+//                           <div className="flex items-center space-x-3">
+//                             <Shield className="w-5 h-5 text-green-600" />
+//                             <span className="text-sm font-semibold text-slate-800">Daily Safety Check</span>
+//                           </div>
+//                           <CheckCircle className="w-5 h-5 text-green-600" />
+//                         </div>
+                        
+//                         <div className="flex items-center justify-between bg-yellow-50 p-3 rounded-lg">
+//                           <div className="flex items-center space-x-3">
+//                             <AlertTriangle className="w-5 h-5 text-yellow-600" />
+//                             <span className="text-sm font-semibold text-slate-800">Equipment Inspection</span>
+//                           </div>
+//                           <Clock className="w-5 h-5 text-yellow-600" />
+//                         </div>
+                        
+//                         <div className="bg-slate-50 p-3 rounded-lg">
+//                           <div className="text-sm font-semibold text-slate-800 mb-2">Safety Metrics</div>
+//                           <div className="flex justify-between text-xs">
+//                             <span className="text-slate-600">Incidents This Month:</span>
+//                             <span className="text-green-600 font-semibold">0</span>
+//                           </div>
+//                           <div className="flex justify-between text-xs">
+//                             <span className="text-slate-600">Safety Score:</span>
+//                             <span className="text-green-600 font-semibold">99.2%</span>
+//                           </div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <Shield className="w-8 h-8 text-orange-600 animate-pulse" />
+//                       </div>
+//                     </div>
+//                   )}
+
+//                   {activeFeature === 5 && (
+//                     <div className="p-6 h-full">
+//                       <div className="text-center space-y-4">
+//                         <div className="flex justify-center space-x-4">
+//                           <div className="w-16 h-24 bg-slate-800 rounded-lg flex items-center justify-center">
+//                             <Smartphone className="w-8 h-8 text-white" />
+//                           </div>
+//                           <div className="w-20 h-16 bg-slate-200 rounded-lg flex items-center justify-center">
+//                             <Globe className="w-8 h-8 text-slate-600" />
+//                           </div>
+//                         </div>
+                        
+//                         <div className="space-y-2">
+//                           <div className="flex items-center justify-center space-x-2">
+//                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+//                             <span className="text-sm text-slate-600">iOS App - Live</span>
+//                           </div>
+//                           <div className="flex items-center justify-center space-x-2">
+//                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+//                             <span className="text-sm text-slate-600">Android App - Live</span>
+//                           </div>
+//                           <div className="flex items-center justify-center space-x-2">
+//                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+//                             <span className="text-sm text-slate-600">Offline Mode - Ready</span>
+//                           </div>
+//                         </div>
+//                       </div>
+                      
+//                       <div className="absolute bottom-4 right-4">
+//                         <Smartphone className="w-8 h-8 text-orange-600 animate-bounce" />
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 {/* Progress Indicators */}
+//                 <div className="flex justify-center space-x-2 mt-6">
+//                   {coreFeatures.map((_, index) => (
+//                     <button
+//                       key={index}
+//                       className={`w-2 h-2 rounded-full transition-all duration-300 ${
+//                         activeFeature === index ? 'bg-orange-600 w-6' : 'bg-gray-300'
+//                       }`}
+//                       onClick={() => setActiveFeature(index)}
+//                     />
+//                   ))}
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Additional Features Grid */}
+//         <div className="border-t border-gray-200 pt-16">
+//           <div className="text-center mb-12">
+//             <h3 className="text-2xl font-bold text-slate-800 mb-4">
+//               Advanced Construction Tools
+//             </h3>
+//             <p className="text-slate-600 max-w-2xl mx-auto">
+//               Specialized features designed for modern construction workflows and industry requirements.
+//             </p>
+//           </div>
+          
+//           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+//             {additionalFeatures.map((feature, index) => (
+//               <div key={index} className="group">
+//                 <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-md hover:border-orange-200 transition-all duration-300 h-full">
+//                   <div className="flex items-start space-x-4">
+//                     <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-orange-50 transition-colors duration-300">
+//                       <feature.icon className="w-5 h-5 text-slate-600 group-hover:text-orange-600 transition-colors duration-300" />
+//                     </div>
+//                     <div>
+//                       <h4 className="font-semibold text-slate-800 mb-2">{feature.title}</h4>
+//                       <p className="text-sm text-slate-600">{feature.description}</p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* Integration Section */}
+//         <div className="mt-20 text-center">
+//           <div className="bg-gradient-to-r from-slate-50 to-orange-50 rounded-2xl p-12">
+//             <h3 className="text-2xl font-bold text-slate-800 mb-4">
+//               Seamless Integrations
+//             </h3>
+//             <p className="text-slate-600 mb-8 max-w-2xl mx-auto">
+//               Connect SkyStruct with your existing tools and workflows. No disruption, just enhancement.
+//             </p>
+            
+//             <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
+//               {['AutoCAD', 'Procore', 'Revit', 'Microsoft 365', 'Slack', 'QuickBooks'].map((integration, index) => (
+//                 <div key={index} className="bg-white px-6 py-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300">
+//                   <span className="text-slate-700 font-semibold">{integration}</span>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default SkyStructFeatures;
+
+
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Users, FileText, BarChart3, Shield, Smartphone, 
@@ -878,7 +1379,7 @@ const SkyStructFeatures = () => {
       title: "Team Collaboration Hub",
       description: "Connect field teams, office staff, and stakeholders with instant communication and file sharing.",
       metrics: "78% better coordination",
-      color: "from-orange-600 to-orange-700",
+      color: "from-blue-400 to-blue-500",
       demo: "Real-time chat, video calls, and progress updates"
     },
     {
@@ -936,12 +1437,12 @@ const SkyStructFeatures = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-block bg-orange-100 text-orange-600 px-4 py-2 rounded-lg text-sm font-semibold mb-4">
+          <div className="inline-block bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold mb-4">
             Powerful Features
           </div>
           <h2 className="text-4xl font-bold text-slate-800 mb-6">
             Everything You Need to Build
-            <span className="text-orange-600"> Successfully</span>
+            <span className="text-blue-400"> Successfully</span>
           </h2>
           <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
             SkyStruct v2lite combines cutting-edge technology with construction expertise to deliver 
@@ -969,7 +1470,7 @@ const SkyStructFeatures = () => {
                   }}
                 >
                   <div className="relative group cursor-pointer">
-                    <div className="p-8 rounded-xl bg-white shadow-lg border border-orange-200">
+                    <div className="p-8 rounded-xl bg-white shadow-lg border border-blue-200">
                       <div className="flex items-start space-x-6">
                         <div className={`p-4 rounded-xl bg-gradient-to-r ${feature.color} text-white shadow-lg`}>
                           <feature.icon className="w-8 h-8" />
@@ -991,7 +1492,7 @@ const SkyStructFeatures = () => {
                     </div>
 
                     {/* Active indicator */}
-                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-orange-600 rounded-r" />
+                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-blue-400 rounded-r" />
                   </div>
                 </div>
               ))}
@@ -1006,7 +1507,7 @@ const SkyStructFeatures = () => {
                       key={index}
                       className={`h-2 rounded-full transition-all duration-300 ${
                         activeFeature === index 
-                          ? 'bg-orange-600 w-8' 
+                          ? 'bg-blue-400 w-8' 
                           : 'bg-gray-300 w-2 hover:bg-gray-400'
                       }`}
                       onClick={() => setActiveFeature(index)}
@@ -1034,7 +1535,7 @@ const SkyStructFeatures = () => {
             </div>
 
             {/* Feature Counter */}
-            <div className="absolute top-0 right-0 bg-orange-600 text-white px-4 py-2 rounded-bl-xl rounded-tr-xl">
+            <div className="absolute top-0 right-0 bg-blue-400 text-white px-4 py-2 rounded-bl-xl rounded-tr-xl">
               <span className="text-sm font-bold">
                 {String(activeFeature + 1).padStart(2, '0')} / {String(coreFeatures.length).padStart(2, '0')}
               </span>
@@ -1049,7 +1550,7 @@ const SkyStructFeatures = () => {
                   <h3 className="text-xl font-semibold text-slate-800 mb-2">
                     {coreFeatures[activeFeature].title}
                   </h3>
-                  <div className="w-12 h-1 bg-orange-600 mx-auto rounded-full" />
+                  <div className="w-12 h-1 bg-blue-400 mx-auto rounded-full" />
                 </div>
 
                 {/* Dynamic Feature Visualization */}
@@ -1068,11 +1569,11 @@ const SkyStructFeatures = () => {
                         
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-600">Structural Framework</span>
-                          <span className="text-orange-600 font-semibold">In Progress</span>
+                          <span className="text-blue-400 font-semibold">In Progress</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-orange-600 h-2 rounded-full w-3/4 transition-all duration-2000">
-                            <div className="h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full animate-pulse"></div>
+                          <div className="bg-blue-400 h-2 rounded-full w-3/4 transition-all duration-2000">
+                            <div className="h-full bg-gradient-to-r from-blue-400 to-blue-300 rounded-full animate-pulse"></div>
                           </div>
                         </div>
                         
@@ -1086,7 +1587,7 @@ const SkyStructFeatures = () => {
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <Calendar className="w-8 h-8 text-orange-600 animate-bounce" />
+                        <Calendar className="w-8 h-8 text-blue-400 animate-bounce" />
                       </div>
                     </div>
                   )}
@@ -1105,15 +1606,15 @@ const SkyStructFeatures = () => {
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         </div>
                         
-                        <div className="flex items-center space-x-3 bg-orange-50 p-3 rounded-lg">
-                          <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+                        <div className="flex items-center space-x-3 bg-blue-50 p-3 rounded-lg">
+                          <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
                             <span className="text-white text-xs font-bold">SK</span>
                           </div>
                           <div className="flex-1">
                             <div className="text-sm font-semibold text-slate-800">Sarah Kim</div>
-                            <div className="text-xs text-orange-600">Project Manager - Active</div>
+                            <div className="text-xs text-blue-400">Project Manager - Active</div>
                           </div>
-                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                         </div>
                         
                         <div className="bg-slate-50 p-3 rounded-lg">
@@ -1123,7 +1624,7 @@ const SkyStructFeatures = () => {
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <Users className="w-8 h-8 text-orange-600 animate-pulse" />
+                        <Users className="w-8 h-8 text-blue-400 animate-pulse" />
                       </div>
                     </div>
                   )}
@@ -1166,7 +1667,7 @@ const SkyStructFeatures = () => {
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <FileText className="w-8 h-8 text-orange-600 animate-bounce" />
+                        <FileText className="w-8 h-8 text-blue-400 animate-bounce" />
                       </div>
                     </div>
                   )}
@@ -1182,8 +1683,8 @@ const SkyStructFeatures = () => {
                           </div>
                         </div>
                         
-                        <div className="bg-orange-50 p-4 rounded-lg">
-                          <div className="text-2xl font-bold text-orange-600">$2.4M</div>
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <div className="text-2xl font-bold text-blue-400">$2.4M</div>
                           <div className="text-sm text-slate-600">Cost Savings</div>
                           <div className="text-xs text-green-600 mt-1">↗ 18% vs last quarter</div>
                         </div>
@@ -1202,7 +1703,7 @@ const SkyStructFeatures = () => {
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <BarChart3 className="w-8 h-8 text-orange-600 animate-pulse" />
+                        <BarChart3 className="w-8 h-8 text-blue-400 animate-pulse" />
                       </div>
                     </div>
                   )}
@@ -1240,7 +1741,7 @@ const SkyStructFeatures = () => {
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <Shield className="w-8 h-8 text-orange-600 animate-pulse" />
+                        <Shield className="w-8 h-8 text-blue-400 animate-pulse" />
                       </div>
                     </div>
                   )}
@@ -1267,14 +1768,14 @@ const SkyStructFeatures = () => {
                             <span className="text-sm text-slate-600">Android App - Live</span>
                           </div>
                           <div className="flex items-center justify-center space-x-2">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                             <span className="text-sm text-slate-600">Offline Mode - Ready</span>
                           </div>
                         </div>
                       </div>
                       
                       <div className="absolute bottom-4 right-4">
-                        <Smartphone className="w-8 h-8 text-orange-600 animate-bounce" />
+                        <Smartphone className="w-8 h-8 text-blue-400 animate-bounce" />
                       </div>
                     </div>
                   )}
@@ -1286,7 +1787,7 @@ const SkyStructFeatures = () => {
                     <button
                       key={index}
                       className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        activeFeature === index ? 'bg-orange-600 w-6' : 'bg-gray-300'
+                        activeFeature === index ? 'bg-blue-400 w-6' : 'bg-gray-300'
                       }`}
                       onClick={() => setActiveFeature(index)}
                     />
@@ -1311,10 +1812,10 @@ const SkyStructFeatures = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {additionalFeatures.map((feature, index) => (
               <div key={index} className="group">
-                <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-md hover:border-orange-200 transition-all duration-300 h-full">
+                <div className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all duration-300 h-full">
                   <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-orange-50 transition-colors duration-300">
-                      <feature.icon className="w-5 h-5 text-slate-600 group-hover:text-orange-600 transition-colors duration-300" />
+                    <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
+                      <feature.icon className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors duration-300" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-slate-800 mb-2">{feature.title}</h4>
@@ -1329,7 +1830,7 @@ const SkyStructFeatures = () => {
 
         {/* Integration Section */}
         <div className="mt-20 text-center">
-          <div className="bg-gradient-to-r from-slate-50 to-orange-50 rounded-2xl p-12">
+          <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-12">
             <h3 className="text-2xl font-bold text-slate-800 mb-4">
               Seamless Integrations
             </h3>

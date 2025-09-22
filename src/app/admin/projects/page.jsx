@@ -1176,6 +1176,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const ProjectsPage = () => {
   const [activeTab, setActiveTab] = useState("All Projects");
@@ -1204,39 +1205,68 @@ const ProjectsPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-
+  const router = useRouter();
   // Fetch projects from API
+  // const fetchProjects = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`
+  //     );
+
+  //     if (!response.ok) {
+  //       if (response.status === 404) {
+  //         throw new Error("Projects endpoint not found");
+  //       } else if (response.status >= 500) {
+  //         throw new Error("Server error occurred");
+  //       } else {
+  //         throw new Error(`Failed to fetch projects: ${response.status}`);
+  //       }
+  //     }
+
+  //     const data = await response.json();
+  //     console.log("ds", data);
+  //     setProjects(data.projects || []);
+  //     setError(null);
+  //   } catch (err) {
+  //     console.error("Error fetching projects:", err);
+  //     setError(err.message);
+  //     toast.error("Failed to load projects");
+  //   } finally {
+  //     setLoading(false);
+  //     setStatsLoading(false);
+  //   }
+  // };
+
   const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`
-      );
+  try {
+    setLoading(true);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`
+    );
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Projects endpoint not found");
-        } else if (response.status >= 500) {
-          throw new Error("Server error occurred");
-        } else {
-          throw new Error(`Failed to fetch projects: ${response.status}`);
-        }
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("Projects endpoint not found");
+      } else if (response.status >= 500) {
+        throw new Error("Server error occurred");
+      } else {
+        throw new Error(`Failed to fetch projects: ${response.status}`);
       }
-
-      const data = await response.json();
-      console.log("ds", data);
-      setProjects(data.projects || []);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching projects:", err);
-      setError(err.message);
-      toast.error("Failed to load projects");
-    } finally {
-      setLoading(false);
-      setStatsLoading(false);
     }
-  };
 
+    const data = await response.json();
+    setProjects(data.projects || []);
+    setError(null);
+  } catch (err) {
+    console.error("Error fetching projects:", err);
+    setError(err.message);
+    toast.error("Failed to load projects");
+  } finally {
+    setLoading(false);
+    setStatsLoading(false);
+  }
+};
   // Calculate stats from projects data
   const calculateStats = () => {
     const totalProjects = projects.length;
@@ -1388,84 +1418,124 @@ const ProjectsPage = () => {
   });
 
   // Validation function
-  const validateForm = () => {
-    const newErrors = {};
+ const validateForm = () => {
+  const newErrors = {};
 
-    if (!newProject.name.trim()) {
-      newErrors.name = "Project name is required";
+  if (!newProject.name.trim()) {
+    newErrors.name = "Project name is required";
+  }
+
+  if (!newProject.code.trim()) {
+    newErrors.code = "Project code is required";
+  }
+
+  if (!newProject.type) {
+    newErrors.type = "Project type is required";
+  }
+
+  if (!newProject.budget) {
+    newErrors.budget = "Budget is required";
+  } else if (
+    isNaN(parseFloat(newProject.budget)) ||
+    parseFloat(newProject.budget) <= 0
+  ) {
+    newErrors.budget = "Budget must be a valid positive number";
+  }
+
+  // Add validation for dates
+  if (newProject.startDate && newProject.endDate) {
+    const start = new Date(newProject.startDate);
+    const end = new Date(newProject.endDate);
+    if (end < start) {
+      newErrors.endDate = "End date cannot be before start date";
     }
+  }
 
-    if (!newProject.code.trim()) {
-      newErrors.code = "Project code is required";
-    }
-
-    if (!newProject.type) {
-      newErrors.type = "Project type is required";
-    }
-
-    if (!newProject.budget) {
-      newErrors.budget = "Budget is required";
-    } else if (
-      isNaN(parseFloat(newProject.budget)) ||
-      parseFloat(newProject.budget) <= 0
-    ) {
-      newErrors.budget = "Budget must be a valid positive number";
-    }
-
-    if (newProject.startDate && newProject.endDate) {
-      const start = new Date(newProject.startDate);
-      const end = new Date(newProject.endDate);
-      if (end < start) {
-        newErrors.endDate = "End date cannot be before start date";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
 
   // Create new project function
+  // const createProject = async (formData) => {
+  //   try {
+  //     const body = Object.fromEntries(formData.entries());
+
+  //     if (body.budget) {
+  //       body.budget = Number(body.budget);
+  //     }
+
+  //     body.currency = body.currency || "INR";
+  //     body.zoneOffset = body.zoneOffset || "+00:00";
+  //     body.status = body.status || "planned";
+  //     body.tags = body.tags
+  //       ? body.tags.split(",").map((tag) => tag.trim())
+  //       : [];
+
+  //     console.log("📤 Sending JSON payload:", body);
+
+  //     const res = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`,
+  //       {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify(body),
+  //       }
+  //     );
+
+  //     const data = await res.json();
+  //     if (!res.ok || !data.success) {
+  //       throw new Error(data.error || `HTTP error! status: ${res.status}`);
+  //     }
+
+  //     console.log("✅ Project created:", data);
+  //     toast.success("Project Created Successfully...!!");
+  //     fetchProjects();
+  //     return data;
+  //   } catch (error) {
+  //     console.error("❌ Error creating project:", error);
+  //     toast.error("Failed to create project");
+  //     throw error;
+  //   }
+  // };
+
   const createProject = async (formData) => {
-    try {
-      const body = Object.fromEntries(formData.entries());
-
-      if (body.budget) {
-        body.budget = Number(body.budget);
-      }
-
-      body.currency = body.currency || "INR";
-      body.zoneOffset = body.zoneOffset || "+00:00";
-      body.status = body.status || "planned";
-      body.tags = body.tags
-        ? body.tags.split(",").map((tag) => tag.trim())
-        : [];
-
-      console.log("📤 Sending JSON payload:", body);
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || `HTTP error! status: ${res.status}`);
-      }
-
-      console.log("✅ Project created:", data);
-      toast.success("Project Created Successfully...!!");
-      fetchProjects();
-      return data;
-    } catch (error) {
-      console.error("❌ Error creating project:", error);
-      toast.error("Failed to create project");
-      throw error;
+  try {
+    const body = Object.fromEntries(formData.entries());
+    
+    // Convert budget to number
+    if (body.budget) {
+      body.budget = Number(body.budget);
     }
-  };
+    
+    // Set default values
+    body.currency = body.currency || "INR";
+    body.zoneOffset = body.zoneOffset || "+00:00";
+    body.status = body.status || "planned";
+    body.tags = body.tags ? body.tags.split(",").map(tag => tag.trim()) : [];
+    
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `HTTP error! status: ${res.status}`);
+    }
+
+    toast.success("Project Created Successfully");
+    fetchProjects(); // Refresh the projects list
+    return data;
+  } catch (error) {
+    console.error("Error creating project:", error);
+    toast.error("Failed to create project");
+    throw error;
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -2322,7 +2392,7 @@ const ProjectsPage = () => {
                             Budget
                           </p>
                           <p className="text-gray-900 text-sm font-semibold">
-                            ₹{project.budget.toFixed(1)}
+                            ₹{(parseFloat(project.budget) || 0).toFixed(1)}
                           </p>
                         </div>
                       </div>
@@ -2418,6 +2488,7 @@ const ProjectsPage = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push(`/admin/my-projects/${project._id}/dashboard`)}
                         className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
                       >
                         View <ChevronRight className="w-4 h-4" />

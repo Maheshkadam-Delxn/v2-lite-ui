@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,11 +20,34 @@ const MyProjectHeader = ({ id }) => {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState({});
+  const [hoveredTab, setHoveredTab] = useState(null);
+  const mobileMenuRef = useRef(null);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "unset";
+    };
+  }, [isMobileMenuOpen]);
 
   const toggleExpandedItem = (name) => {
-    setExpandedItems(prev => ({
+    setExpandedItems((prev) => ({
       ...prev,
-      [name]: !prev[name]
+      [name]: !prev[name],
     }));
   };
 
@@ -105,45 +128,173 @@ const MyProjectHeader = ({ id }) => {
   ];
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between font-sans shadow-sm">
-      <div className="flex items-center gap-4 w-full">
-        <h1 className="text-xl font-semibold text-gray-900 tracking-tight bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 font-sans shadow-sm rounded-b-2xl sticky top-0 z-40 backdrop-blur-sm bg-white/95">
+      <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
+        <h1 className="text-lg font-semibold text-gray-900 tracking-tight flex-shrink-0">
           Project
         </h1>
         <button
-          className="sm:hidden ml-auto p-2 rounded-md hover:bg-gray-100 transition"
+          className="sm:hidden p-2 rounded-full hover:bg-gray-100 transition-all duration-300 flex-shrink-0 active:scale-95"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
         >
-          {isMobileMenuOpen ? <X size={20} className="text-gray-600" /> : <Menu size={20} className="text-gray-600" />}
+          {isMobileMenuOpen ? (
+            <X size={20} className="text-gray-600 transition-transform duration-300 rotate-90" />
+          ) : (
+            <Menu size={20} className="text-gray-600 transition-transform duration-300" />
+          )}
         </button>
-        <nav className="hidden sm:flex gap-1">
+        <nav className="hidden sm:flex items-center space-x-1 flex-wrap justify-end flex-1">
           {tabs.map(({ name, icon: Icon, href, children }) => {
             const isActive = pathname.startsWith(href);
+            const isHovered = hoveredTab === name;
+
             return (
-              <div key={name} className="relative group">
+              <div 
+                key={name} 
+                className="relative group flex-shrink-0"
+                onMouseEnter={() => setHoveredTab(name)}
+                onMouseLeave={() => setHoveredTab(null)}
+              >
                 <Link
                   href={href}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-md transition-all duration-200 ${
-                    isActive 
-                      ? "text-blue-700 bg-blue-50 shadow-sm" 
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl transition-all duration-300 min-w-[100px] justify-center relative overflow-hidden group ${
+                    isActive
+                      ? "text-blue-700 bg-blue-50 shadow-sm"
                       : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
                   }`}
                 >
-                  <Icon size={16} className={isActive ? "text-blue-600" : "text-gray-500 group-hover:text-blue-500"} />
-                  <span>{name}</span>
-                  {children && <ChevronDown size={14} className="text-gray-400 group-hover:text-blue-400" />}
+                  {/* Animated background effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-400/10 rounded-xl transition-all duration-500 transform ${
+                    isHovered && !isActive ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                  }`} />
+                  
+                  <Icon 
+                    size={14} 
+                    className={`relative z-10 transition-all duration-300 ${
+                      isActive 
+                        ? "text-blue-600 scale-110" 
+                        : "text-gray-500 group-hover:text-blue-500 group-hover:scale-110"
+                    }`} 
+                  />
+                  <span className="relative z-10 whitespace-nowrap transition-all duration-300">
+                    {name}
+                  </span>
+                  {children && (
+                    <ChevronDown 
+                      size={12} 
+                      className={`relative z-10 transition-all duration-300 ${
+                        isActive 
+                          ? "text-blue-500" 
+                          : "text-gray-400 group-hover:text-blue-400"
+                      } ${isHovered ? "rotate-180" : ""}`} 
+                    />
+                  )}
                 </Link>
+                
+                {/* Enhanced dropdown with smooth animation */}
                 {children && (
-                  <div className="absolute left-0 top-full mt-1 hidden group-hover:flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-50 py-1 transform translate-y-1 group-hover:translate-y-0 transition-all duration-200 ease-out">
-                    {children.map((child) => (
+                  <div className={`absolute left-0 top-full mt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left ${
+                    isHovered ? "scale-100 translate-y-0" : "scale-95 -translate-y-2"
+                  }`}>
+                    <div className="bg-white/95 backdrop-blur-md border border-gray-200/80 rounded-xl shadow-lg min-w-[180px] z-50 py-2 overflow-hidden">
+                      {children.map((child, index) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`block px-4 py-2 text-sm font-medium transition-all duration-300 hover:bg-blue-50 relative overflow-hidden group ${
+                            pathname === child.href
+                              ? "text-blue-700 bg-blue-50/80"
+                              : "text-gray-600 hover:text-blue-600"
+                          }`}
+                          style={{ transitionDelay: `${index * 30}ms` }}
+                        >
+                          {/* Hover effect line */}
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 transform scale-y-0 transition-transform duration-300 group-hover:scale-y-100" />
+                          <span className="relative z-10">{child.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Enhanced Mobile Menu with smooth animation */}
+      <div 
+        ref={mobileMenuRef}
+        className={`sm:hidden fixed inset-x-0 top-[76px] bottom-0 bg-white/95 backdrop-blur-md z-50 transition-all duration-500 ease-in-out overflow-y-auto ${
+          isMobileMenuOpen 
+            ? "opacity-100 translate-y-0 visible" 
+            : "opacity-0 -translate-y-4 invisible"
+        }`}
+      >
+        <nav className="flex flex-col p-4 gap-1">
+          {tabs.map(({ name, icon: Icon, href, children }) => {
+            const isActive = pathname.startsWith(href);
+            const isExpanded = expandedItems[name];
+
+            return (
+              <div key={name} className="relative">
+                <div className="flex items-center rounded-xl transition-all duration-300 hover:bg-gray-50/80">
+                  <Link
+                    href={href}
+                    className={`flex items-center gap-3 flex-1 px-4 py-3 text-base font-medium rounded-xl transition-all duration-300 ${
+                      isActive
+                        ? "text-blue-700 bg-blue-50/80"
+                        : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      if (!children) {
+                        setIsMobileMenuOpen(false);
+                        setExpandedItems({});
+                      }
+                    }}
+                  >
+                    <Icon 
+                      size={18} 
+                      className={isActive ? "text-blue-600" : "text-gray-500"} 
+                    />
+                    <span className="whitespace-nowrap">{name}</span>
+                  </Link>
+                  {children && (
+                    <button
+                      className="p-3 rounded-xl hover:bg-gray-100/50 transition-all duration-300 active:scale-95"
+                      onClick={() => toggleExpandedItem(name)}
+                      aria-label={`Toggle ${name} menu`}
+                    >
+                      <ChevronDown
+                        size={18}
+                        className={`text-gray-500 transition-transform duration-300 ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  )}
+                </div>
+                {children && (
+                  <div 
+                    className={`ml-6 flex flex-col gap-1 border-l-2 border-gray-200/50 pl-4 transition-all duration-500 overflow-hidden ${
+                      isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    {children.map((child, index) => (
                       <Link
                         key={child.href}
                         href={child.href}
-                        className={`px-4 py-2 text-sm whitespace-nowrap hover:bg-blue-50 transition-colors duration-150 ${
-                          pathname === child.href 
-                            ? "text-blue-700 font-medium bg-blue-50" 
-                            : "text-gray-700 hover:text-blue-600"
+                        className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-300 transform hover:translate-x-1 ${
+                          pathname === child.href
+                            ? "text-blue-700 bg-blue-50/80"
+                            : "text-gray-600 hover:text-blue-600 hover:bg-gray-50/50"
                         }`}
+                        style={{ transitionDelay: `${index * 50}ms` }}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          setExpandedItems({});
+                        }}
                       >
                         {child.name}
                       </Link>
@@ -154,67 +305,16 @@ const MyProjectHeader = ({ id }) => {
             );
           })}
         </nav>
-        {isMobileMenuOpen && (
-          <nav className="absolute top-full left-0 w-full bg-white border-t border-gray-200 sm:hidden z-50 shadow-lg">
-            <ul className="flex flex-col p-2 gap-1">
-              {tabs.map(({ name, icon: Icon, href, children }) => {
-                const isActive = pathname.startsWith(href);
-                const isExpanded = expandedItems[name];
-                
-                return (
-                  <li key={name} className="relative">
-                    <div className="flex items-center">
-                      <Link
-                        href={href}
-                        className={`flex items-center gap-2 flex-1 px-3 py-2.5 text-base font-medium rounded-md transition-colors duration-200 ${
-                          isActive 
-                            ? "text-blue-700 bg-blue-50" 
-                            : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                        }`}
-                        onClick={() => {
-                          if (!children) setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        <Icon size={18} className={isActive ? "text-blue-600" : "text-gray-500"} />
-                        <span className="whitespace-nowrap">{name}</span>
-                      </Link>
-                      {children && (
-                        <button 
-                          className="p-2 mr-1 rounded-md hover:bg-gray-100"
-                          onClick={() => toggleExpandedItem(name)}
-                        >
-                          <ChevronDown 
-                            size={16} 
-                            className={`text-gray-500 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} 
-                          />
-                        </button>
-                      )}
-                    </div>
-                    {children && isExpanded && (
-                      <ul className="ml-6 mt-1 flex flex-col gap-1 border-l border-gray-200 pl-2">
-                        {children.map((child) => (
-                          <li key={child.href}>
-                            <Link
-                              href={child.href}
-                              className={`block px-3 py-2.5 text-sm rounded-md transition-colors duration-150 ${
-                                pathname === child.href 
-                                  ? "text-blue-700 font-medium bg-blue-50" 
-                                  : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
-                              }`}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              {child.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        )}
+        
+        {/* Close button for mobile */}
+        <div className="p-4 border-t border-gray-200/50 mt-4">
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-full py-3 px-4 bg-gray-100/80 text-gray-700 rounded-xl font-medium transition-all duration-300 active:scale-95 hover:bg-gray-200/80"
+          >
+            Close Menu
+          </button>
+        </div>
       </div>
     </header>
   );

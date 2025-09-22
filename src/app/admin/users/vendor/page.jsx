@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Grid3X3, List, Filter, ChevronRight,
-  User, Users, Settings, Plus, Pencil, X
+  User, Users, Settings, Plus, Pencil, X, Save
 } from 'lucide-react';
 
 const VendorPage = () => {
@@ -132,13 +132,35 @@ const VendorPage = () => {
       statusColor: 'bg-green-100 text-green-700 border-green-200'
     }
   ]);
+
   const vendorStats = [
     { label: 'Total Vendors', value: '9', change: '+1', icon: Users },
     { label: 'General Contractors', value: '2', change: '+0', icon: User },
     { label: 'Subcontractors', value: '3', change: '+1', icon: Settings },
     { label: 'Other Vendors', value: '4', change: '+0', icon: Users }
   ];
+
+  const tabs = [
+    { name: 'All Vendors', count: vendors.length },
+    { name: 'General Contractor', count: vendors.filter(v => v.type === 'General Contractor').length },
+    { name: 'Subcontractor', count: vendors.filter(v => v.type === 'Subcontractor').length },
+    { name: 'Other Vendors', count: vendors.filter(v => ['Vendor', 'Electrical Contractor', 'Plumbing Contractor'].includes(v.type)).length }
+  ];
+
   const [editingVendor, setEditingVendor] = useState(null);
+  const [addingVendor, setAddingVendor] = useState(false);
+  const [newVendor, setNewVendor] = useState({
+    name: '',
+    email: '',
+    type: 'General Contractor',
+    code: '',
+    taxNo: '',
+    gstin: '',
+    address: '',
+    icon: '🏗️',
+    status: 'Active',
+    statusColor: 'bg-green-100 text-green-700 border-green-200'
+  });
 
   const filteredVendors = vendors.filter((vendor) => {
     const matchesSearch =
@@ -183,6 +205,7 @@ const VendorPage = () => {
     }));
   };
 
+  // Edit Vendor Functions
   const openEditModal = (vendor) => {
     setEditingVendor({ ...vendor });
   };
@@ -208,6 +231,181 @@ const VendorPage = () => {
     );
     closeEditModal();
   };
+
+  // Add Vendor Functions
+  const openAddModal = () => {
+    setAddingVendor(true);
+    setNewVendor({
+      name: '',
+      email: '',
+      type: 'General Contractor',
+      code: `VEND-${String(vendors.length + 1).padStart(4, '0')}`,
+      taxNo: '',
+      gstin: '',
+      address: '',
+      icon: '🏗️',
+      status: 'Active',
+      statusColor: 'bg-green-100 text-green-700 border-green-200'
+    });
+  };
+
+  const closeAddModal = () => {
+    setAddingVendor(false);
+  };
+
+  const handleAddChange = (e) => {
+    const { name, value } = e.target;
+    setNewVendor((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const saveNewVendor = () => {
+    if (!newVendor.name || !newVendor.email || !newVendor.code || !newVendor.taxNo || !newVendor.gstin || !newVendor.address) {
+      alert('All fields are required.');
+      return;
+    }
+
+    const vendorWithId = {
+      ...newVendor,
+      id: vendors.length > 0 ? Math.max(...vendors.map(v => v.id)) + 1 : 1
+    };
+
+    setVendors((prev) => [...prev, vendorWithId]);
+    closeAddModal();
+  };
+
+  const VendorForm = ({ vendor, isEditing, onChange, onSave, onCancel }) => (
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.8, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 300 }}
+      className="bg-white rounded-3xl shadow-xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+    >
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {isEditing ? 'Edit Vendor' : 'Add New Vendor'}
+        </h2>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onCancel}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <X className="w-6 h-6" />
+        </motion.button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Vendor Name</label>
+          <input
+            type="text"
+            name="name"
+            value={vendor.name}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+            placeholder="Enter vendor name"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={vendor.email}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+            placeholder="Enter email address"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Vendor Type</label>
+          <select
+            name="type"
+            value={vendor.type}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+          >
+            <option value="General Contractor">General Contractor</option>
+            <option value="Subcontractor">Subcontractor</option>
+            <option value="Electrical Contractor">Electrical Contractor</option>
+            <option value="Plumbing Contractor">Plumbing Contractor</option>
+            <option value="Vendor">Vendor</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Vendor Code</label>
+          <input
+            type="text"
+            name="code"
+            value={vendor.code}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+            placeholder="VEND-0001"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Tax Number</label>
+          <input
+            type="text"
+            name="taxNo"
+            value={vendor.taxNo}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+            placeholder="Enter tax number"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">GSTIN Number</label>
+          <input
+            type="text"
+            name="gstin"
+            value={vendor.gstin}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
+            placeholder="Enter GSTIN number"
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm font-bold text-gray-700 mb-2">Address</label>
+          <textarea
+            name="address"
+            value={vendor.address}
+            onChange={onChange}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold resize-none h-24"
+            placeholder="Enter complete address"
+          />
+        </div>
+
+      </div>
+
+      <div className="flex justify-end gap-4 mt-8">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onCancel}
+          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
+        >
+          Cancel
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onSave}
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
+        >
+          <Save className="w-4 h-4" />
+          {isEditing ? 'Update Vendor' : 'Add Vendor'}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -263,6 +461,7 @@ const VendorPage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={openAddModal}
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus className="w-4 h-4" />
@@ -284,7 +483,6 @@ const VendorPage = () => {
                   <List className="w-5 h-5" />
                 </motion.button>
               </div>
-              
             </div>
           </div>
         </motion.div>
@@ -440,121 +638,35 @@ const VendorPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
             >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full mx-4"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Edit Vendor</h2>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={closeEditModal}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <X className="w-6 h-6" />
-                  </motion.button>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={editingVendor.name}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={editingVendor.email}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Vendor Type</label>
-                    <select
-                      name="type"
-                      value={editingVendor.type}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    >
-                      <option value="General Contractor">General Contractor</option>
-                      <option value="Subcontractor">Subcontractor</option>
-                      <option value="Electrical Contractor">Electrical Contractor</option>
-                      <option value="Plumbing Contractor">Plumbing Contractor</option>
-                      <option value="Vendor">Vendor</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Vendor Code</label>
-                    <input
-                      type="text"
-                      name="code"
-                      value={editingVendor.code}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Tax No.</label>
-                    <input
-                      type="text"
-                      name="taxNo"
-                      value={editingVendor.taxNo}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">GSTIN No.</label>
-                    <input
-                      type="text"
-                      name="gstin"
-                      value={editingVendor.gstin}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Address</label>
-                    <textarea
-                      name="address"
-                      value={editingVendor.address}
-                      onChange={handleEditChange}
-                      className="w-full px-4 py-2 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-900 font-semibold resize-none h-24"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-4 mt-6">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={closeEditModal}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={saveEdit}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
-                  >
-                    Save
-                  </motion.button>
-                </div>
-              </motion.div>
+              <VendorForm
+                vendor={editingVendor}
+                isEditing={true}
+                onChange={handleEditChange}
+                onSave={saveEdit}
+                onCancel={closeEditModal}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Add Vendor Modal */}
+        <AnimatePresence>
+          {addingVendor && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            >
+              <VendorForm
+                vendor={newVendor}
+                isEditing={false}
+                onChange={handleAddChange}
+                onSave={saveNewVendor}
+                onCancel={closeAddModal}
+              />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Grid3X3, List, Filter, ChevronRight,
-  User, Users, Settings, Plus, Pencil, Clock, Briefcase
+  User, Users, Settings, Plus, Pencil, Clock, Briefcase, X
 } from 'lucide-react';
 
 const MembersPage = () => {
@@ -13,22 +13,10 @@ const MembersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState({});
-
-  const memberStats = [
-    { label: 'Total Members', value: '12', change: '+2', icon: Users },
-    { label: 'Active Members', value: '10', change: '+1', icon: User },
-    { label: 'Admins', value: '3', change: '+0', icon: Settings },
-    { label: 'Contractors', value: '5', change: '+1', icon: Users }
-  ];
-
-  const tabs = [
-    { name: 'All Members', count: 12 },
-    { name: 'Admins', count: 3 },
-    { name: 'Consultants', count: 4 },
-    { name: 'Contractors', count: 5 }
-  ];
-
-  const members = [
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [members, setMembers] = useState([
     {
       id: 1,
       name: 'Alan David',
@@ -53,9 +41,7 @@ const MembersPage = () => {
       email: 'vikashoffice38@gmail.com',
       role: 'Consultant',
       lastLogin: '29 Jul 2025 12:32 PM',
-      projects: ['Granite Horizon','Green City Apartments',
-        'Skyline Corporate Tower',
-        'SkyTower Commercial Hub',],
+      projects: ['Granite Horizon', 'Green City Apartments', 'Skyline Corporate Tower', 'SkyTower Commercial Hub'],
       status: 'Active',
       avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?w=40&h=40&fit=crop',
       icon: '🧑‍💼',
@@ -67,14 +53,34 @@ const MembersPage = () => {
       email: 'viyjp3112@acedby.com',
       role: 'Contractor',
       lastLogin: 'Not logged in yet',
-      projects: ['Granite Horizon','Green City Apartments',
-        'Skyline Corporate Tower',
-        'SkyTower Commercial Hub',],
+      projects: ['Granite Horizon', 'Green City Apartments', 'Skyline Corporate Tower', 'SkyTower Commercial Hub'],
       status: 'Active',
       avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=40&h=40&fit=crop',
       icon: '👷',
-      statusColor: 'bg-green-100 text-green-700 border-green-200'
+      statusColor: 'bg-green-100 text-gray-700 border-green-200'
     },
+  ]);
+
+  const [newMember, setNewMember] = useState({
+    name: '',
+    email: '',
+    role: 'Project Admin',
+    projects: [],
+    status: 'Active'
+  });
+
+  const memberStats = [
+    { label: 'Total Members', value: members.length, change: '+2', icon: Users },
+    { label: 'Active Members', value: members.filter(m => m.status === 'Active').length, change: '+1', icon: User },
+    { label: 'Admins', value: members.filter(m => m.role === 'Project Admin').length, change: '+0', icon: Settings },
+    { label: 'Contractors', value: members.filter(m => m.role === 'Contractor').length, change: '+1', icon: Users }
+  ];
+
+  const tabs = [
+    { name: 'All Members', count: members.length },
+    { name: 'Admins', count: members.filter(m => m.role === 'Project Admin').length },
+    { name: 'Consultants', count: members.filter(m => m.role === 'Consultant').length },
+    { name: 'Contractors', count: members.filter(m => m.role === 'Contractor').length }
   ];
 
   const filteredMembers = members.filter((member) => {
@@ -111,6 +117,33 @@ const MembersPage = () => {
       ...prev,
       [memberId]: !prev[memberId]
     }));
+  };
+
+  const handleAddMember = (e) => {
+    e.preventDefault();
+    const newId = members.length + 1;
+    setMembers([...members, {
+      ...newMember,
+      id: newId,
+      lastLogin: 'Not logged in yet',
+      avatar: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=40&h=40&fit=crop',
+      icon: newMember.role === 'Project Admin' ? '👤' : newMember.role === 'Consultant' ? '🧑‍💼' : '👷',
+      statusColor: 'bg-green-100 text-green-700 border-green-200'
+    }]);
+    setNewMember({ name: '', email: '', role: 'Project Admin', projects: [], status: 'Active' });
+    setIsAddModalOpen(false);
+  };
+
+  const handleEditMember = (e) => {
+    e.preventDefault();
+    setMembers(members.map(m => m.id === selectedMember.id ? { ...selectedMember } : m));
+    setIsEditModalOpen(false);
+    setSelectedMember(null);
+  };
+
+  const openEditModal = (member) => {
+    setSelectedMember({ ...member });
+    setIsEditModalOpen(true);
   };
 
   return (
@@ -167,6 +200,10 @@ const MembersPage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setNewMember({ name: '', email: '', role: 'Project Admin', projects: [], status: 'Active' });
+                  setIsAddModalOpen(true);
+                }}
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-5 py-3 rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus className="w-4 h-4" />
@@ -188,7 +225,6 @@ const MembersPage = () => {
                   <List className="w-5 h-5" />
                 </motion.button>
               </div>
-             
             </div>
           </div>
         </motion.div>
@@ -237,6 +273,220 @@ const MembersPage = () => {
             );
           })}
         </div>
+
+        {/* Add Member Modal */}
+        <AnimatePresence>
+          {isAddModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, y: 50 }}
+                className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Add New Member</h2>
+                  <button
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={newMember.name}
+                      onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                      placeholder="Enter name"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={newMember.email}
+                      onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                      placeholder="Enter email"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Role</label>
+                    <select
+                      value={newMember.role}
+                      onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
+                    >
+                      <option value="Project Admin">Project Admin</option>
+                      <option value="Consultant">Consultant</option>
+                      <option value="Contractor">Contractor</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Projects (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={newMember.projects.join(', ')}
+                      onChange={(e) => setNewMember({ ...newMember, projects: e.target.value.split(',').map(p => p.trim()).filter(p => p) })}
+                      placeholder="Enter projects, e.g., Project A, Project B"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Status</label>
+                    <select
+                      value={newMember.status}
+                      onChange={(e) => setNewMember({ ...newMember, status: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={() => setIsAddModalOpen(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleAddMember}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700"
+                    >
+                      Add Member
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Member Modal */}
+        <AnimatePresence>
+          {isEditModalOpen && selectedMember && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, y: 50 }}
+                className="bg-white rounded-3xl shadow-xl p-6 w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Member</h2>
+                  <button
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={selectedMember.name}
+                      onChange={(e) => setSelectedMember({ ...selectedMember, name: e.target.value })}
+                      placeholder="Enter name"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={selectedMember.email}
+                      onChange={(e) => setSelectedMember({ ...selectedMember, email: e.target.value })}
+                      placeholder="Enter email"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Role</label>
+                    <select
+                      value={selectedMember.role}
+                      onChange={(e) => setSelectedMember({ ...selectedMember, role: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
+                    >
+                      <option value="Project Admin">Project Admin</option>
+                      <option value="Consultant">Consultant</option>
+                      <option value="Contractor">Contractor</option>
+                    </select>
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Projects (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={selectedMember.projects.join(', ')}
+                      onChange={(e) => setSelectedMember({ ...selectedMember, projects: e.target.value.split(',').map(p => p.trim()).filter(p => p) })}
+                      placeholder="Enter projects, e.g., Project A, Project B"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-black mb-1">Status</label>
+                    <select
+                      value={selectedMember.status}
+                      onChange={(e) => setSelectedMember({ ...selectedMember, status: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleEditMember}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700"
+                    >
+                      Save Changes
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Member Cards */}
         <motion.div
@@ -337,6 +587,7 @@ const MembersPage = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={() => openEditModal(member)}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
                   >
                     Edit <Pencil className="w-4 h-4" />

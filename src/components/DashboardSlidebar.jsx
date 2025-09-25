@@ -499,7 +499,7 @@ const DashboardSlidebar = () => {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/projects");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`);
       if (response.ok) {
         const data = await response.json();
         setMyProjects(data.projects || []);
@@ -517,6 +517,9 @@ const DashboardSlidebar = () => {
     fetchProjects();
   }, []);
 
+
+  console.log(myProjects);
+  
     const handleMenuItemClick = (item) => {
     setActiveItem(item.name);
     if (item.path) {
@@ -540,7 +543,7 @@ const DashboardSlidebar = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/auth/logout`, {
         method: "POST",
       });
 

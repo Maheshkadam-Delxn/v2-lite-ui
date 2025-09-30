@@ -44,7 +44,6 @@ const VendorPage = () => {
     { label: 'Subcontractors', value: vendors.filter(v => v.vendorType === 'Subcontractor').length.toString(), change: '+0', icon: Settings },
     { label: 'Other Vendors', value: vendors.filter(v => !['General Contractor', 'Subcontractor'].includes(v.vendorType)).length.toString(), change: '+0', icon: Users }
   ];
-
   // Fetch vendors from API
   const fetchVendors = async () => {
     try {
@@ -208,7 +207,6 @@ const VendorPage = () => {
       throw err;
     }
   };
-
 
   const filteredVendors = vendors.filter((vendor) => {
     const matchesSearch =

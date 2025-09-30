@@ -181,67 +181,12 @@ export default function SkyStructRegister() {
               </div>
             </div>
 
-            {/* Role Selection */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Role</label>
-              <div className="flex gap-2">
-                <div className="flex-1 relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <select
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Select role</option>
-                    <option value="superadmin">Super Admin</option>
-                    <option value="vendor">Vendor</option>
-                    <option value="member">Team Member</option>
-                  </select>
-                </div>
-
-                {role === "member" && (
-                  <div className="flex-1 relative">
-                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <select
-                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none"
-                      value={subRole}
-                      onChange={(e) => setSubRole(e.target.value)}
-                      required
-                      disabled={loading}
-                    >
-                      <option value="">Specialty</option>
-                      <option value="project-admin">Project Admin</option>
-                      <option value="consultant">Consultant</option>
-                      <option value="contractor">Contractor</option>
-                      <option value="approver">Approver</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-
+     
             {/* Phone Number */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
               <div className="flex gap-2">
-                <div className="relative">
-                  <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <select
-                    name="countryCode"
-                    value={formData.countryCode}
-                    onChange={handleInputChange}
-                    className="pl-8 pr-2 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-sm appearance-none w-20"
-                    disabled={loading}
-                  >
-                    <option value="+91">🇮🇳</option>
-                    <option value="+1">🇺🇸</option>
-                    <option value="+44">🇬🇧</option>
-                    <option value="+61">🇦🇺</option>
-                    <option value="+971">🇦🇪</option>
-                  </select>
-                </div>
+               
                 <div className="flex-1 relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input

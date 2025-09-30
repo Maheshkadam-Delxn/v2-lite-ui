@@ -1,78 +1,58 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Mail,
-  Lock,
-  Phone,
-  Key,
-  ShieldCheck,
-  User,
-  Eye,
-  EyeOff,
-  AlertCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ShieldCheck, Key } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext'; // Import useAuth
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [credentials, setCredentials] = useState({
-    email: "",
-    password: "",
-  });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth(); // Get login function from useAuth
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCredentials((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user starts typing
-    if (error) setError("");
+    setCredentials((prev) => ({ ...prev, [name]: value }));
+    if (error) setError(''); // clear old errors on typing
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(credentials),
-        }
-      );
+      const res = await fetch('https://v2-lite-api.vercel.app/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
 
-      const data = await response.json();
+      const data = await res.json();
+      console.log('Login response:', data);
 
-      console.log(data);
-
-      if (data.success) {
-        // Store token in localStorage or cookies
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Redirect to dashboard or home page
-        router.push("/admin/projects");
-      } else {
-        setError(data.error || "Login failed. Please try again.");
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Login failed. Please try again.');
+        return;
       }
+
+      // Assuming the server returns token and user in the response
+      const { token, user } = data; // Adjust based on your API response structure
+      login(token, user); // Store token and user in sessionStorage using AuthContext
+      router.push('/admin/projects');
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Network error. Please check your connection and try again.");
+      console.error('Login error:', err);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">

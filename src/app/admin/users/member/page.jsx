@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Grid3X3, List, Filter, ChevronRight,
@@ -21,7 +21,8 @@ const MembersPage = () => {
   const [members, setMembers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [newMember, setNewMember] = useState({
+  
+  const initialMemberState = {
     staffNumber: '',
     name: '',
     email: '',
@@ -37,37 +38,42 @@ const MembersPage = () => {
     profileImage: '',
     manager: '',
     projects: [],
-  });
+  };
+
+  const [newMember, setNewMember] = useState(initialMemberState);
 
   // Drag and drop states
   const [availableProjects, setAvailableProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [draggedProject, setDraggedProject] = useState(null);
 
-  const memberStats = [
+  // Memoized calculations
+  const memberStats = useCallback(() => [
     { label: 'Total Members', value: members.length, change: '+2', icon: Users },
     { label: 'Admins', value: members.filter(m => m.roleName === 'approver').length, change: '+0', icon: Settings },
     { label: 'Consultants', value: members.filter(m => m.roleName === 'Consultant').length, change: '+1', icon: Users },
     { label: 'Contractors', value: members.filter(m => m.roleName === 'Contractor').length, change: '+1', icon: Users }
-  ];
+  ], [members]);
 
-  const tabs = [
+  const tabs = useCallback(() => [
     { name: 'All Members', count: members.length },
     { name: 'Admins', count: members.filter(m => m.roleName === 'approver').length },
     { name: 'Consultants', count: members.filter(m => m.roleName === 'Consultant').length },
     { name: 'Contractors', count: members.filter(m => m.roleName === 'Contractor').length }
-  ];
+  ], [members]);
 
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.status.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredMembers = useCallback(() => {
+    return members.filter((member) => {
+      const matchesSearch =
+        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.roleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.status.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (activeTab === 'All Members') return matchesSearch;
-    return matchesSearch && member.roleName === activeTab;
-  });
+      if (activeTab === 'All Members') return matchesSearch;
+      return matchesSearch && member.roleName === activeTab;
+    });
+  }, [members, searchTerm, activeTab]);
 
   const getRoleColor = (status) => {
     switch (status) {
@@ -152,13 +158,13 @@ const MembersPage = () => {
     setAvailableProjects(prev => [...prev, project]);
   };
 
-  const initializeDragDrop = (currentProjects = []) => {
+  const initializeDragDrop = useCallback((currentProjects = []) => {
     const currentProjectIds = currentProjects.map(p => p.id || p);
     const selected = projects.filter(p => currentProjectIds.includes(p.id));
     const available = projects.filter(p => !currentProjectIds.includes(p.id));
     setSelectedProjects(selected);
     setAvailableProjects(available);
-  };
+  }, [projects]);
 
   const fetchRoles = async () => {
     try {
@@ -336,23 +342,7 @@ const MembersPage = () => {
         const [rolesData, projectsData] = await Promise.all([fetchRoles(), fetchProjects()]);
         await fetchMembers(rolesData, projectsData);
         setIsAddModalOpen(false);
-        setNewMember({
-          staffNumber: '',
-          name: '',
-          email: '',
-          phone: '',
-          department: '',
-          role: '',
-          status: 'Active',
-          prefferedLanguage: 'English',
-          service: '',
-          code: '',
-          grade: '',
-          discipline: '',
-          profileImage: '',
-          manager: '',
-          projects: [],
-        });
+        setNewMember(initialMemberState);
         setSelectedProjects([]);
         setAvailableProjects(projectsData);
       } else {
@@ -363,61 +353,60 @@ const MembersPage = () => {
       alert('Failed to add member: ' + error.message);
     }
   };
-
-  const handleEditMember = async (e) => {
-    e.preventDefault();
-    try {
-      const token = sessionStorage.getItem('token') || '';
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const payload = {
-        ...selectedMember,
-        manager: selectedMember.manager || null,
-        status: selectedMember.status || 'Active',
-        projects: selectedProjects.map(p => p.id),
-      };
-      delete payload.id;
-      delete payload.roleName;
-      delete payload.managerName;
-      delete payload.projectNames;
-      delete payload.avatar;
-      delete payload.icon;
-      delete payload.lastLogin;
-      console.log('Edit member payload:', payload);
-      const res = await fetch(`${apiBase}/api/member/${selectedMember.staffNumber}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(payload),
-      });
-      const text = await res.text();
-      console.log('Edit member response:', text);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}, response: ${text}`);
-      }
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Response is not JSON: ' + text);
-      }
-      const data = JSON.parse(text);
-      if (data.success) {
-        const [rolesData, projectsData] = await Promise.all([fetchRoles(), fetchProjects()]);
-        await fetchMembers(rolesData, projectsData);
-        setIsEditModalOpen(false);
-        setSelectedMember(null);
-        setSelectedProjects([]);
-        setAvailableProjects(projectsData);
-      } else {
-        alert(data.message || 'Failed to edit member');
-      }
-    } catch (error) {
-      console.error('Failed to edit member:', error, 'Response:', error.message);
-      alert('Failed to edit member: ' + error.message);
+const handleEditMember = async (e) => {
+  e.preventDefault();
+  try {
+    const token = sessionStorage.getItem('token') || '';
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-  };
+    const payload = {
+      ...selectedMember,
+      manager: selectedMember.manager || null,
+      status: selectedMember.status || 'Active',
+      projects: selectedProjects.map(p => p.id),
+    };
+    delete payload.id;
+    delete payload.roleName;
+    delete payload.managerName;
+    delete payload.projectNames;
+    delete payload.avatar;
+    delete payload.icon;
+    delete payload.lastLogin;
+    console.log('Edit member payload:', payload);
+    const res = await fetch(`${apiBase}/api/member/${selectedMember._id}`, {  // Use _id instead of staffNumber
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    console.log('Edit member response:', text);
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}, response: ${text}`);
+    }
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Response is not JSON: ' + text);
+    }
+    const data = JSON.parse(text);
+    if (data.success) {
+      const [rolesData, projectsData] = await Promise.all([fetchRoles(), fetchProjects()]);
+      await fetchMembers(rolesData, projectsData);
+      setIsEditModalOpen(false);
+      setSelectedMember(null);
+      setSelectedProjects([]);
+      setAvailableProjects(projectsData);
+    } else {
+      alert(data.message || 'Failed to edit member');
+    }
+  } catch (error) {
+    console.error('Failed to edit member:', error, 'Response:', error.message);
+    alert('Failed to edit member: ' + error.message);
+  }
+};
 
   const openEditModal = (member) => {
     setSelectedMember({
@@ -430,26 +419,25 @@ const MembersPage = () => {
   };
 
   const openAddModal = () => {
-    setNewMember({
-      staffNumber: '',
-      name: '',
-      email: '',
-      phone: '',
-      department: '',
-      role: '',
-      status: 'Active',
-      prefferedLanguage: 'English',
-      service: '',
-      code: '',
-      grade: '',
-      discipline: '',
-      profileImage: '',
-      manager: '',
-      projects: [],
-    });
+    setNewMember(initialMemberState);
     initializeDragDrop();
     setIsAddModalOpen(true);
   };
+
+  // Stable input handlers to prevent unnecessary re-renders
+  const handleNewMemberChange = useCallback((field, value) => {
+    setNewMember(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  const handleSelectedMemberChange = useCallback((field, value) => {
+    setSelectedMember(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
 
   // Custom scrollbar styles
   const scrollbarStyles = `
@@ -470,8 +458,18 @@ const MembersPage = () => {
     }
   `;
 
+  // Memoized Components
+  const FormField = memo(({ label, children, className = '' }) => (
+    <div className={`mb-4 ${className}`}>
+      <label className="block text-sm font-medium text-black mb-2">{label}</label>
+      {children}
+    </div>
+  ));
+
+  FormField.displayName = 'FormField';
+
   // Project Selection Component
-  const ProjectSelection = () => (
+  const ProjectSelection = memo(() => (
     <div className="mb-6">
       <style jsx>{scrollbarStyles}</style>
       <label className="block text-sm font-medium text-black mb-3">Projects</label>
@@ -554,20 +552,500 @@ const MembersPage = () => {
         💡 Drag and drop projects between columns or use the Add/Remove buttons
       </p>
     </div>
-  );
+  ));
 
-  // Form Field Component for consistent styling
-  const FormField = ({ label, children, className = '' }) => (
-    <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-black mb-2">{label}</label>
-      {children}
-    </div>
-  );
+  ProjectSelection.displayName = 'ProjectSelection';
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <style jsx global>{scrollbarStyles}</style>
-      <div className="max-w-7xl mx-auto">
+  // Modal Components
+  const AddMemberModal = memo(() => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={() => setIsAddModalOpen(false)}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50 }}
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col thin-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-white">Add New Member</h2>
+            <button
+              onClick={() => setIsAddModalOpen(false)}
+              className="text-white hover:text-blue-100 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <div className="flex-1 overflow-y-auto p-6 thin-scrollbar">
+          <form onSubmit={handleAddMember}>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <FormField label="Staff Number">
+                  <input
+                    type="text"
+                    value={newMember.staffNumber}
+                    onChange={(e) => handleNewMemberChange('staffNumber', e.target.value)}
+                    placeholder="Enter staff number"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Name">
+                  <input
+                    type="text"
+                    value={newMember.name}
+                    onChange={(e) => handleNewMemberChange('name', e.target.value)}
+                    placeholder="Enter name"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Email">
+                  <input
+                    type="email"
+                    value={newMember.email}
+                    onChange={(e) => handleNewMemberChange('email', e.target.value)}
+                    placeholder="Enter email"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Phone">
+                  <input
+                    type="text"
+                    value={newMember.phone}
+                    onChange={(e) => handleNewMemberChange('phone', e.target.value)}
+                    placeholder="Enter phone"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Department">
+                  <input
+                    type="text"
+                    value={newMember.department}
+                    onChange={(e) => handleNewMemberChange('department', e.target.value)}
+                    placeholder="Enter department"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Role">
+                  <select
+                    value={newMember.role}
+                    onChange={(e) => handleNewMemberChange('role', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                    required
+                  >
+                    <option value="">Select Role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-4">
+                <FormField label="Status">
+                  <select
+                    value={newMember.status}
+                    onChange={(e) => handleNewMemberChange('status', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                    required
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Preferred Language">
+                  <select
+                    value={newMember.prefferedLanguage}
+                    onChange={(e) => handleNewMemberChange('prefferedLanguage', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                  >
+                    <option value="English">English</option>
+                    <option value="Arabic">Arabic</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Service">
+                  <input
+                    type="text"
+                    value={newMember.service}
+                    onChange={(e) => handleNewMemberChange('service', e.target.value)}
+                    placeholder="Enter service"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Code">
+                  <input
+                    type="text"
+                    value={newMember.code}
+                    onChange={(e) => handleNewMemberChange('code', e.target.value)}
+                    placeholder="Enter code"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Grade">
+                  <input
+                    type="text"
+                    value={newMember.grade}
+                    onChange={(e) => handleNewMemberChange('grade', e.target.value)}
+                    placeholder="Enter grade"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Manager">
+                  <select
+                    value={newMember.manager}
+                    onChange={(e) => handleNewMemberChange('manager', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                  >
+                    <option value="">No Manager</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+            </div>
+
+            {/* Additional Fields */}
+            <div className="grid grid-cols-2 gap-6 mt-4">
+              <FormField label="Discipline">
+                <input
+                  type="text"
+                  value={newMember.discipline}
+                  onChange={(e) => handleNewMemberChange('discipline', e.target.value)}
+                  placeholder="Enter discipline"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                />
+              </FormField>
+
+              <FormField label="Profile Image URL">
+                <input
+                  type="text"
+                  value={newMember.profileImage}
+                  onChange={(e) => handleNewMemberChange('profileImage', e.target.value)}
+                  placeholder="Enter profile image URL"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                />
+              </FormField>
+            </div>
+
+            {/* Project Selection */}
+            <ProjectSelection />
+
+            {/* Form Actions */}
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+              >
+                Add Member
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  ));
+
+  AddMemberModal.displayName = 'AddMemberModal';
+
+  const EditMemberModal = memo(() => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={() => setIsEditModalOpen(false)}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50 }}
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col thin-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-white">Edit Member</h2>
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="text-white hover:text-blue-100 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <div className="flex-1 overflow-y-auto p-6 thin-scrollbar">
+          <form onSubmit={handleEditMember}>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <FormField label="Staff Number">
+                  <input
+                    type="text"
+                    value={selectedMember.staffNumber}
+                    onChange={(e) => handleSelectedMemberChange('staffNumber', e.target.value)}
+                    placeholder="Enter staff number"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Name">
+                  <input
+                    type="text"
+                    value={selectedMember.name}
+                    onChange={(e) => handleSelectedMemberChange('name', e.target.value)}
+                    placeholder="Enter name"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Email">
+                  <input
+                    type="email"
+                    value={selectedMember.email}
+                    onChange={(e) => handleSelectedMemberChange('email', e.target.value)}
+                    placeholder="Enter email"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Phone">
+                  <input
+                    type="text"
+                    value={selectedMember.phone}
+                    onChange={(e) => handleSelectedMemberChange('phone', e.target.value)}
+                    placeholder="Enter phone"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Department">
+                  <input
+                    type="text"
+                    value={selectedMember.department}
+                    onChange={(e) => handleSelectedMemberChange('department', e.target.value)}
+                    placeholder="Enter department"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Role">
+                  <select
+                    value={selectedMember.role}
+                    onChange={(e) => handleSelectedMemberChange('role', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                    required
+                  >
+                    <option value="">Select Role</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-4">
+                <FormField label="Status">
+                  <select
+                    value={selectedMember.status}
+                    onChange={(e) => handleSelectedMemberChange('status', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                    required
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Preferred Language">
+                  <select
+                    value={selectedMember.prefferedLanguage}
+                    onChange={(e) => handleSelectedMemberChange('prefferedLanguage', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                  >
+                    <option value="English">English</option>
+                    <option value="Arabic">Arabic</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Service">
+                  <input
+                    type="text"
+                    value={selectedMember.service}
+                    onChange={(e) => handleSelectedMemberChange('service', e.target.value)}
+                    placeholder="Enter service"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                    required
+                  />
+                </FormField>
+
+                <FormField label="Code">
+                  <input
+                    type="text"
+                    value={selectedMember.code}
+                    onChange={(e) => handleSelectedMemberChange('code', e.target.value)}
+                    placeholder="Enter code"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Grade">
+                  <input
+                    type="text"
+                    value={selectedMember.grade}
+                    onChange={(e) => handleSelectedMemberChange('grade', e.target.value)}
+                    placeholder="Enter grade"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                  />
+                </FormField>
+
+                <FormField label="Manager">
+                  <select
+                    value={selectedMember.manager}
+                    onChange={(e) => handleSelectedMemberChange('manager', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
+                  >
+                    <option value="">No Manager</option>
+                    {members
+                      .filter(m => m.id !== selectedMember.id)
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                  </select>
+                </FormField>
+              </div>
+            </div>
+
+            {/* Additional Fields */}
+            <div className="grid grid-cols-2 gap-6 mt-4">
+              <FormField label="Discipline">
+                <input
+                  type="text"
+                  value={selectedMember.discipline}
+                  onChange={(e) => handleSelectedMemberChange('discipline', e.target.value)}
+                  placeholder="Enter discipline"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                />
+              </FormField>
+
+              <FormField label="Profile Image URL">
+                <input
+                  type="text"
+                  value={selectedMember.profileImage}
+                  onChange={(e) => handleSelectedMemberChange('profileImage', e.target.value)}
+                  placeholder="Enter profile image URL"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
+                />
+              </FormField>
+            </div>
+
+            {/* Project Selection */}
+            <ProjectSelection />
+
+            {/* Form Actions */}
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+              >
+                Save Changes
+              </motion.button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  ));
+
+  EditMemberModal.displayName = 'EditMemberModal';
+
+  // Main content component to prevent re-renders
+  const MainContent = memo(() => {
+    const currentMemberStats = memberStats();
+    const currentTabs = tabs();
+    const currentFilteredMembers = filteredMembers();
+
+    const getIconColor = (label) => {
+      switch (label) {
+        case 'Total Members':
+          return 'text-blue-600';
+        case 'Admins':
+          return 'text-purple-600';
+        case 'Consultants':
+          return 'text-yellow-600';
+        case 'Contractors':
+          return 'text-orange-600';
+        default:
+          return 'text-gray-700';
+      }
+    };
+
+    return (
+      <>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -603,7 +1081,7 @@ const MembersPage = () => {
                 </motion.button>
                 {filterOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-20">
-                    {tabs.map((tab) => (
+                    {currentTabs.map((tab) => (
                       <button
                         key={tab.name}
                         onClick={() => { setActiveTab(tab.name); setFilterOpen(false); }}
@@ -647,23 +1125,8 @@ const MembersPage = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {memberStats.map((stat, i) => {
+          {currentMemberStats.map((stat, i) => {
             const Icon = stat.icon;
-
-            const getIconColor = (label) => {
-              switch (label) {
-                case 'Total Members':
-                  return 'text-blue-600';
-                case 'Admins':
-                  return 'text-purple-600';
-                case 'Consultants':
-                  return 'text-yellow-600';
-                case 'Contractors':
-                  return 'text-orange-600';
-                default:
-                  return 'text-gray-700';
-              }
-            };
 
             return (
               <motion.div
@@ -690,474 +1153,6 @@ const MembersPage = () => {
           })}
         </div>
 
-        {/* Add Member Modal */}
-        <AnimatePresence>
-          {isAddModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-              onClick={() => setIsAddModalOpen(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.8, y: 50 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 50 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col thin-scrollbar"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white">Add New Member</h2>
-                    <button
-                      onClick={() => setIsAddModalOpen(false)}
-                      className="text-white hover:text-blue-100 transition-colors"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Form Content */}
-                <div className="flex-1 overflow-y-auto p-6 thin-scrollbar">
-                  <form onSubmit={handleAddMember}>
-                    <div className="grid grid-cols-2 gap-6">
-                      {/* Left Column */}
-                      <div className="space-y-4">
-                        <FormField label="Staff Number">
-                          <input
-                            type="text"
-                            value={newMember.staffNumber}
-                            onChange={(e) => setNewMember({ ...newMember, staffNumber: e.target.value })}
-                            placeholder="Enter staff number"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Name">
-                          <input
-                            type="text"
-                            value={newMember.name}
-                            onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                            placeholder="Enter name"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Email">
-                          <input
-                            type="email"
-                            value={newMember.email}
-                            onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                            placeholder="Enter email"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Phone">
-                          <input
-                            type="text"
-                            value={newMember.phone}
-                            onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                            placeholder="Enter phone"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Department">
-                          <input
-                            type="text"
-                            value={newMember.department}
-                            onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
-                            placeholder="Enter department"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Role">
-                          <select
-                            value={newMember.role}
-                            onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                            required
-                          >
-                            <option value="">Select Role</option>
-                            {roles.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.name}
-                              </option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      {/* Right Column */}
-                      <div className="space-y-4">
-                        <FormField label="Status">
-                          <select
-                            value={newMember.status}
-                            onChange={(e) => setNewMember({ ...newMember, status: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                            required
-                          >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                          </select>
-                        </FormField>
-
-                        <FormField label="Preferred Language">
-                          <select
-                            value={newMember.prefferedLanguage}
-                            onChange={(e) => setNewMember({ ...newMember, prefferedLanguage: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                          >
-                            <option value="English">English</option>
-                            <option value="Arabic">Arabic</option>
-                          </select>
-                        </FormField>
-
-                        <FormField label="Service">
-                          <input
-                            type="text"
-                            value={newMember.service}
-                            onChange={(e) => setNewMember({ ...newMember, service: e.target.value })}
-                            placeholder="Enter service"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Code">
-                          <input
-                            type="text"
-                            value={newMember.code}
-                            onChange={(e) => setNewMember({ ...newMember, code: e.target.value })}
-                            placeholder="Enter code"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Grade">
-                          <input
-                            type="text"
-                            value={newMember.grade}
-                            onChange={(e) => setNewMember({ ...newMember, grade: e.target.value })}
-                            placeholder="Enter grade"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Manager">
-                          <select
-                            value={newMember.manager}
-                            onChange={(e) => setNewMember({ ...newMember, manager: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                          >
-                            <option value="">No Manager</option>
-                            {members.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name}
-                              </option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-                    </div>
-
-                    {/* Additional Fields */}
-                    <div className="grid grid-cols-2 gap-6 mt-4">
-                      <FormField label="Discipline">
-                        <input
-                          type="text"
-                          value={newMember.discipline}
-                          onChange={(e) => setNewMember({ ...newMember, discipline: e.target.value })}
-                          placeholder="Enter discipline"
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                        />
-                      </FormField>
-
-                      <FormField label="Profile Image URL">
-                        <input
-                          type="text"
-                          value={newMember.profileImage}
-                          onChange={(e) => setNewMember({ ...newMember, profileImage: e.target.value })}
-                          placeholder="Enter profile image URL"
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                        />
-                      </FormField>
-                    </div>
-
-                    {/* Project Selection */}
-                    <ProjectSelection />
-
-                    {/* Form Actions */}
-                    <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={() => setIsAddModalOpen(false)}
-                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
-                      >
-                        Cancel
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="submit"
-                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
-                      >
-                        Add Member
-                      </motion.button>
-                    </div>
-                  </form>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Edit Member Modal */}
-        <AnimatePresence>
-          {isEditModalOpen && selectedMember && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.8, y: 50 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 50 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col thin-scrollbar"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white">Edit Member</h2>
-                    <button
-                      onClick={() => setIsEditModalOpen(false)}
-                      className="text-white hover:text-blue-100 transition-colors"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Form Content */}
-                <div className="flex-1 overflow-y-auto p-6 thin-scrollbar">
-                  <form onSubmit={handleEditMember}>
-                    <div className="grid grid-cols-2 gap-6">
-                      {/* Left Column */}
-                      <div className="space-y-4">
-                        <FormField label="Staff Number">
-                          <input
-                            type="text"
-                            value={selectedMember.staffNumber}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, staffNumber: e.target.value })}
-                            placeholder="Enter staff number"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Name">
-                          <input
-                            type="text"
-                            value={selectedMember.name}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, name: e.target.value })}
-                            placeholder="Enter name"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Email">
-                          <input
-                            type="email"
-                            value={selectedMember.email}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, email: e.target.value })}
-                            placeholder="Enter email"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Phone">
-                          <input
-                            type="text"
-                            value={selectedMember.phone}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, phone: e.target.value })}
-                            placeholder="Enter phone"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Department">
-                          <input
-                            type="text"
-                            value={selectedMember.department}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, department: e.target.value })}
-                            placeholder="Enter department"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Role">
-                          <select
-                            value={selectedMember.role}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, role: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                            required
-                          >
-                            <option value="">Select Role</option>
-                            {roles.map((role) => (
-                              <option key={role.id} value={role.id}>
-                                {role.name}
-                              </option>
-                            ))}
-                          </select>
-                        </FormField>
-                      </div>
-
-                      {/* Right Column */}
-                      <div className="space-y-4">
-                        <FormField label="Status">
-                          <select
-                            value={selectedMember.status}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, status: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                            required
-                          >
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                          </select>
-                        </FormField>
-
-                        <FormField label="Preferred Language">
-                          <select
-                            value={selectedMember.prefferedLanguage}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, prefferedLanguage: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                          >
-                            <option value="English">English</option>
-                            <option value="Arabic">Arabic</option>
-                          </select>
-                        </FormField>
-
-                        <FormField label="Service">
-                          <input
-                            type="text"
-                            value={selectedMember.service}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, service: e.target.value })}
-                            placeholder="Enter service"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                            required
-                          />
-                        </FormField>
-
-                        <FormField label="Code">
-                          <input
-                            type="text"
-                            value={selectedMember.code}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, code: e.target.value })}
-                            placeholder="Enter code"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Grade">
-                          <input
-                            type="text"
-                            value={selectedMember.grade}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, grade: e.target.value })}
-                            placeholder="Enter grade"
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                          />
-                        </FormField>
-
-                        <FormField label="Manager">
-                          <select
-                            value={selectedMember.manager}
-                            onChange={(e) => setSelectedMember({ ...selectedMember, manager: e.target.value })}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-white"
-                          >
-                            <option value="">No Manager</option>
-                            {members
-                              .filter(m => m.id !== selectedMember.id)
-                              .map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.name}
-                                </option>
-                              ))}
-                          </select>
-                        </FormField>
-                      </div>
-                    </div>
-
-                    {/* Additional Fields */}
-                    <div className="grid grid-cols-2 gap-6 mt-4">
-                      <FormField label="Discipline">
-                        <input
-                          type="text"
-                          value={selectedMember.discipline}
-                          onChange={(e) => setSelectedMember({ ...selectedMember, discipline: e.target.value })}
-                          placeholder="Enter discipline"
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                        />
-                      </FormField>
-
-                      <FormField label="Profile Image URL">
-                        <input
-                          type="text"
-                          value={selectedMember.profileImage}
-                          onChange={(e) => setSelectedMember({ ...selectedMember, profileImage: e.target.value })}
-                          placeholder="Enter profile image URL"
-                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-black bg-white"
-                        />
-                      </FormField>
-                    </div>
-
-                    {/* Project Selection */}
-                    <ProjectSelection />
-
-                    {/* Form Actions */}
-                    <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={() => setIsEditModalOpen(false)}
-                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
-                      >
-                        Cancel
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        type="submit"
-                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
-                      >
-                        Save Changes
-                      </motion.button>
-                    </div>
-                  </form>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Member Cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1165,7 +1160,7 @@ const MembersPage = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8' : 'space-y-6'}
         >
-          {filteredMembers.map((member) => (
+          {currentFilteredMembers.map((member) => (
             <motion.div
               key={member.id}
               whileHover={{ y: -5, boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
@@ -1270,6 +1265,24 @@ const MembersPage = () => {
             </motion.div>
           ))}
         </motion.div>
+      </>
+    );
+  });
+
+  MainContent.displayName = 'MainContent';
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <style jsx global>{scrollbarStyles}</style>
+      <div className="max-w-7xl mx-auto">
+        {/* Modals */}
+        <AnimatePresence>
+          {isAddModalOpen && <AddMemberModal />}
+          {isEditModalOpen && selectedMember && <EditMemberModal />}
+        </AnimatePresence>
+
+        {/* Main Content */}
+        <MainContent />
       </div>
     </div>
   );

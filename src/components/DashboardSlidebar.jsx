@@ -488,6 +488,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
  import { useRouter } from 'next/navigation';
+ import { useAuth } from '../context/AuthContext';
 const DashboardSlidebar = () => {
   const [activeItem, setActiveItem] = useState("Project Overview");
   const [openSubmenu, setOpenSubmenu] = useState(null);
@@ -495,6 +496,7 @@ const DashboardSlidebar = () => {
   const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { token, logout: clearAuth } = useAuth(); // Get token and logout function from context
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -540,22 +542,22 @@ const DashboardSlidebar = () => {
     setActiveItem("");
     router.push('/admin/profile');
   };
+ 
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/auth/logout`, {
-        method: "POST",
-      });
+const handleLogout = async () => {
+  const token = sessionStorage.getItem('token') || ''; // Direct access, like add member
+  if (token) {
+    console.warn('No token found—logging out anyway');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    router.push("/login");
+    return;
+  }
+  if(!token){
 
-      if (response.ok) {
-        router.push("/login");
-      } else {
-        console.error("Logout failed");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+    router.push("/login");
+  }
+};
 
   const menuItems = [
     {

@@ -4,27 +4,27 @@ import {
   Mail,
   Lock,
   Phone,
-  Globe,
   User,
-  Briefcase,
   Building,
   Shield,
   Award,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function SkyStructRegister() {
-  const [role, setRole] = useState("");
-  const [subRole, setSubRole] = useState("");
+  const [step, setStep] = useState("form");
+  const [otp, setOtp] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone_number: "",
-    password: "",
-    countryCode: "+91"
+    password: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,48 +47,78 @@ export default function SkyStructRegister() {
     setSuccess("");
 
     try {
-      if (!formData.name || !formData.email || !formData.phone_number || !formData.password || !role) {
+      if (!formData.name || !formData.email || !formData.phone_number || !formData.password) {
         setError("All fields are required");
         setLoading(false);
         return;
       }
 
-      if (role === "member" && !subRole) {
-        setError("Sub-role is required for member");
-        setLoading(false);
-        return;
-      }
-
-      const userData = {
+      const body = {
         name: formData.name,
         email: formData.email,
-        phone_number: formData.countryCode + formData.phone_number,
-        password: formData.password,
-        role: role,
-        memberRole: role === "member" ? subRole : null
+        mobile: formData.phone_number,
+        password: formData.password
       };
 
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("https://v2-lite-api.vercel.app/api/register/request-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setSuccess("Registration successful! Redirecting to login...");
+        setSuccess("OTP sent to your email. Please enter the code below.");
+        setStep("otp");
+      } else {
+        setError(data.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+      console.error("Request OTP error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("https://v2-lite-api.vercel.app/api/register/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          otp
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess("Account verified successfully! Redirecting to login...");
         setTimeout(() => {
           router.push("/login");
         }, 2000);
       } else {
-        setError(data.error || "Registration failed");
+        setError(data.message || "Verification failed");
       }
     } catch (err) {
       setError("Network error. Please try again.");
-      console.error("Registration error:", err);
+      console.error("Verify OTP error:", err);
     } finally {
       setLoading(false);
     }
@@ -143,51 +173,49 @@ export default function SkyStructRegister() {
             </div>
           )}
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name & Email Row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
-                    placeholder="John Doe"
-                    required
-                    disabled={loading}
-                  />
+          {step === "form" ? (
+            /* Registration Form */
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name & Email Row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
+                      placeholder="John Doe"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
+                      placeholder="you@company.com"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* Phone Number */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
-                    placeholder="you@company.com"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </div>
-
-     
-            {/* Phone Number */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
-              <div className="flex gap-2">
-               
-                <div className="flex-1 relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="tel"
@@ -195,54 +223,114 @@ export default function SkyStructRegister() {
                     value={formData.phone_number}
                     onChange={handleInputChange}
                     className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
-                    placeholder="98765 43210"
+                    placeholder="9876543210"
                     required
                     disabled={loading}
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
-                  placeholder="Create a strong password"
-                  required
-                  disabled={loading}
-                />
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 placeholder-slate-400 text-sm"
+                    placeholder="Create a strong password"
+                    required
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Include uppercase, lowercase, number & special character
+                </p>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Include uppercase, lowercase, number & special character
-              </p>
-            </div>
 
-            {/* Register Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating Account...
+              {/* Register Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending OTP...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <span>Send OTP</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </div>
+                )}
+              </button>
+            </form>
+          ) : (
+            /* OTP Verification Form */
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Enter OTP</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setOtp(value);
+                      if (error) setError("");
+                    }}
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 text-center text-lg font-mono tracking-widest"
+                    placeholder="000000"
+                    disabled={loading}
+                  />
                 </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <span>Create Account</span>
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </div>
-              )}
-            </button>
-          </form>
+                <p className="text-xs text-slate-500 mt-1">Enter the 6-digit code sent to {formData.email}</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || otp.length !== 6}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Verifying...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <span>Verify OTP</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </div>
+                )}
+              </button>
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setStep("form")}
+                  className="text-orange-600 hover:text-orange-700 underline text-sm"
+                  disabled={loading}
+                >
+                  Change email or details
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Footer Links */}
           <div className="mt-4 text-center">
@@ -251,6 +339,7 @@ export default function SkyStructRegister() {
               <button
                 onClick={handleLoginClick}
                 className="text-orange-600 hover:text-orange-700 font-semibold"
+                disabled={loading}
               >
                 Sign In
               </button>

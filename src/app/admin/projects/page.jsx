@@ -19,6 +19,7 @@ import {
   Loader2,
   RefreshCw,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -54,6 +55,7 @@ const ProjectsPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [deletingProjectId, setDeletingProjectId] = useState(null);
   const router = useRouter();
 
   // Fetch projects from API
@@ -137,6 +139,56 @@ const ProjectsPage = () => {
       console.error("Error creating project:", error);
       toast.error("Failed to create project");
       throw error;
+    }
+  };
+
+  // Delete project function
+  const deleteProject = async (projectId, token) => {
+    try {
+      setDeletingProjectId(projectId);
+      
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects/${projectId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to delete project: ${res.status}`);
+      }
+
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success("Project deleted successfully");
+        // Remove project from state
+        setProjects(prev => prev.filter(project => project._id !== projectId));
+      } else {
+        throw new Error(data.error || "Failed to delete project");
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("Failed to delete project");
+      throw error;
+    } finally {
+      setDeletingProjectId(null);
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteProject = async (projectId, projectName) => {
+    if (window.confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+      try {
+        await deleteProject(projectId, token);
+      } catch (error) {
+        // Error is already handled in deleteProject function
+      }
     }
   };
 
@@ -1055,12 +1107,28 @@ const ProjectsPage = () => {
                     boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
                   }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className={`bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden ${
+                  className={`bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden relative ${
                     viewMode === "list"
                       ? "flex flex-col md:flex-row md:items-stretch p-6 gap-6"
                       : "flex flex-col"
                   }`}
                 >
+                  {/* DELETE BUTTON */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleDeleteProject(project._id, project.name)}
+                    disabled={deletingProjectId === project._id}
+                    className="absolute top-4 right-4 z-20 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+                    title="Delete Project"
+                  >
+                    {deletingProjectId === project._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </motion.button>
+
                   <div className="bg-blue-500 px-6 py-8 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -translate-y-16 translate-x-16"></div>

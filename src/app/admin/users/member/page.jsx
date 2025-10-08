@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Grid3X3, List, Filter, ChevronRight,
-  Users, Settings, Plus, Pencil, Clock, Briefcase, X,
+  Users, Settings, Plus, Pencil, Clock, Briefcase, X, Trash2, Loader2,
   Move, GripVertical
 } from 'lucide-react';
 
@@ -1167,6 +1167,21 @@ const handleEditMember = async (e) => {
               transition={{ type: 'spring', stiffness: 300 }}
               className={`bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden ${viewMode === 'list' ? 'flex flex-col md:flex-row md:items-stretch gap-6' : 'flex flex-col'}`}
             >
+
+                {/* DELETE BUTTON */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    
+                    className="absolute top-4 right-4 z-20 w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+                    title="Delete Project"
+                  >
+                    
+                      <Trash2 className="w-4 h-4" />
+                    
+                  </motion.button>
+
+
               {/* Card Top - Blue Mask */}
               <div className="bg-blue-600 px-6 py-8 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>

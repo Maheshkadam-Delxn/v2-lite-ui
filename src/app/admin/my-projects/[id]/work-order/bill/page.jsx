@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import MyProjectHeader from "@/components/my-project/header";
-import { Search, Plus, ChevronLeft, ChevronRight, HelpCircle, Eye, Trash2, X, FileText, User } from "lucide-react";
+import { Search, Plus, ChevronLeft, ChevronRight, HelpCircle, Eye, Trash2, X, FileText, User, Edit2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const initialCreateForm = {
+  projectId: '',
   workOrder: '',
   advancePayment: '',
   remark: '',
@@ -17,10 +19,13 @@ const initialCreateForm = {
 };
 
 export default function BillPage() {
+  const params = useParams();
+  const projectId = params?.projectId;
   const [bills, setBills] = useState([]);
   const [workOrders, setWorkOrders] = useState([]);
   const [advancePayments, setAdvancePayments] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const [currentProject, setCurrentProject] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState("");
@@ -36,47 +41,73 @@ export default function BillPage() {
   const [viewDeductions, setViewDeductions] = useState([]);
 
   useEffect(() => {
+    if (!projectId) return;
     fetchBills();
     fetchWorkOrders();
     fetchAdvancePayments();
     fetchVendors();
-  }, []);
+    fetchCurrentProject();
+  }, [projectId]);
 
-  const handleWorkOrderChange = async (value, setter) => {
-    setter(prev => ({ ...prev, workOrder: value }));
-    if (value) {
-      try {
-        const response = await fetch(`/api/workorder/${value}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const result = await response.json();
-        if (result.success && result.data && result.data.projectId) {
-          setter(prev => ({ ...prev, projectId: result.data.projectId }));
-        } else {
-          // If no projectId, clear it
-          setter(prev => ({ ...prev, projectId: '' }));
-        }
-      } catch (err) {
-        console.error('Error fetching work order:', err);
-        setter(prev => ({ ...prev, projectId: '' }));
+  const sanitizeFormData = (data, items) => {
+    const sanitized = { ...data };
+    // Sanitize string fields to prevent undefined/null and apply toUpperCase where appropriate
+    const stringFields = ['remark', 'deductionAmount'];
+    stringFields.forEach(key => {
+      sanitized[key] = sanitized[key] ? String(sanitized[key]).toUpperCase() : '';
+    });
+    // Ensure IDs are strings, empty if null/undefined
+    ['projectId', 'workOrder', 'advancePayment'].forEach(key => {
+      if (sanitized[key] && typeof sanitized[key] === 'object') {
+        sanitized[key] = sanitized[key]._id;
       }
-    } else {
-      setter(prev => ({ ...prev, projectId: '' }));
-    }
+      sanitized[key] = String(sanitized[key] || '');
+    });
+    // Ensure numbers are 0 if null/undefined
+    ['taxPercentage', 'retantionAmount', 'netPayment'].forEach(key => {
+      sanitized[key] = sanitized[key] ?? 0;
+    });
+    // Sanitize items array
+    const sanitizedItems = (items || []).map(item => ({
+      type: item.type || 'penalty',
+      amount: item.amount ?? 0,
+      remark: item.remark ? String(item.remark).toUpperCase() : ''
+    }));
+    sanitized.items = sanitizedItems;
+    return sanitized;
   };
 
+  async function fetchCurrentProject() {
+    if (!projectId) return;
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const result = await response.json();
+      if (result.success) {
+        setCurrentProject(result.data);
+      } else {
+        console.error(result.message || 'Failed to fetch project');
+      }
+    } catch (err) {
+      console.error('Error fetching project:', err);
+    }
+  }
+
   async function fetchBills() {
+    if (!projectId) return;
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/workorder/bill', {
+      const url = `/api/workorder/bill?projectId=${projectId}`;
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -101,10 +132,11 @@ export default function BillPage() {
   }
 
   async function fetchWorkOrders() {
+    if (!projectId) return;
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/workorder', {
+      const response = await fetch(`/api/workorder?projectId=${projectId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -117,6 +149,7 @@ export default function BillPage() {
       const result = await response.json();
       if (result.success) {
         setWorkOrders(result.data || []);
+        console.log("result data:",result.data);
       } else {
         setError(result.message || 'Failed to fetch work orders');
       }
@@ -128,10 +161,11 @@ export default function BillPage() {
   }
 
   async function fetchAdvancePayments() {
+    if (!projectId) return;
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/workorder/advancepayment', {
+      const response = await fetch(`/api/workorder/advancepayment?projectId=${projectId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -173,13 +207,64 @@ export default function BillPage() {
     }
   }
 
+  async function fetchBill(id) {
+    try {
+      const response = await fetch(`/api/workorder/bill/${id}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+      }
+      const result = await response.json();
+      if (result.success) {
+        const bill = result.data;
+        const formData = { ...bill };
+        ['projectId', 'workOrder', 'advancePayment'].forEach(key => {
+          if (formData[key] && typeof formData[key] === 'object') {
+            formData[key] = formData[key]._id;
+          }
+          formData[key] = String(formData[key] || '');
+        });
+        setViewForm(formData);
+        setViewDeductions(bill.items || []);
+        return bill;
+      } else {
+        alert(result.message || 'Failed to fetch bill');
+        return null;
+      }
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  }
+
+  const handleView = async (id) => {
+    const billData = await fetchBill(id);
+    if (billData) {
+      setSelectedBill(billData);
+      setIsViewOpen(true);
+      setIsEditMode(false);
+    }
+  };
+
+  const handleEdit = async (id) => {
+    const billData = await fetchBill(id);
+    if (billData) {
+      setSelectedBill(billData);
+      setIsViewOpen(true);
+      setIsEditMode(true);
+    }
+  };
+
   async function handleCreate(e) {
     e.preventDefault();
-    if (!createForm.workOrder || !createForm.projectId) {
-      alert('Please select a valid work order with associated project.');
+    if (!createForm.workOrder || !createForm.advancePayment || !createForm.projectId) {
+      alert('Please select a valid work order, advance payment, and ensure project is set.');
       return;
     }
-    const formData = { ...createForm, items: deductions };
+    const formData = sanitizeFormData(createForm, deductions);
     try {
       const response = await fetch('/api/workorder/bill', {
         method: 'POST',
@@ -208,7 +293,11 @@ export default function BillPage() {
   }
 
   async function handleUpdate() {
-    const formData = { ...viewForm, items: viewDeductions };
+    if (!viewForm.workOrder || !viewForm.advancePayment || !viewForm.projectId) {
+      alert('Please select a valid work order, advance payment, and ensure project is set.');
+      return;
+    }
+    const formData = sanitizeFormData(viewForm, viewDeductions);
     try {
       const response = await fetch(`/api/workorder/bill/${selectedBill._id}`, {
         method: 'PUT',
@@ -224,7 +313,7 @@ export default function BillPage() {
       }
       const result = await response.json();
       if (result.success) {
-        setBills(prev => prev.map(b => b._id.toString() === selectedBill._id.toString() ? { ...b, ...formData } : b));
+        setBills(prev => prev.map(b => b._id.toString() === selectedBill._id.toString() ? result.data : b));
         setIsEditMode(false);
       } else {
         alert(result.message || 'Failed to update bill');
@@ -257,7 +346,7 @@ export default function BillPage() {
   }
 
   const formatAmount = (amount) => {
-    if (!amount && amount !== 0) return '0 K';
+    if (!amount) return '0 K';
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return `${(num / 1000).toFixed(2)} K`;
   };
@@ -267,40 +356,38 @@ export default function BillPage() {
     return new Date(date).toLocaleDateString();
   };
 
-  const getWorkOrderNo = (woId) => {
-    if (!woId) return 'Not Linked';
-    return workOrders.find(w => w._id?.toString() === woId?.toString())?.workOrderNo || 'Not Linked';
+  const getWorkOrderNo = (wo) => {
+    if (typeof wo === 'object' && wo.workOrderNo) return wo.workOrderNo;
+    const id = typeof wo === 'object' ? wo?._id : wo;
+    return workOrders.find(w => w._id?.toString() === id?.toString())?.workOrderNo || 'Not Linked';
   };
 
   const getWorkOrderVendor = (woNo) => {
-    if (!woNo) return 'N/A';
     const wo = workOrders.find(w => w.workOrderNo === woNo);
     const vendorId = wo?.vendorId;
     return vendors.find(v => v._id?.toString() === vendorId?.toString())?.name || 'N/A';
   };
 
+  const getAdvancePaymentNo = (apId) => {
+    const id = typeof apId === 'object' ? apId?._id : apId;
+    return advancePayments.find(a => a._id?.toString() === id?.toString())?.paymentNo || id || 'N/A';
+  };
+
   const getWorkOrderDate = (woNo) => {
-    if (!woNo) return 'N/A';
     const wo = workOrders.find(w => w.workOrderNo === woNo);
     return formatDate(wo?.date || wo?.createdAt);
   };
 
-  // Safe search function that handles undefined values
   const filteredBills = bills.filter((bill) => {
     const woNo = getWorkOrderNo(bill.workOrder);
     const vendorName = getWorkOrderVendor(woNo);
     const billDate = formatDate(bill.createdAt);
-    const billNo = bill.billNo || '';
-    const netPayment = bill.netPayment || 0;
-
-    const searchLower = search.toLowerCase();
-    
     return (
-      billNo.toLowerCase().includes(searchLower) ||
-      woNo.toLowerCase().includes(searchLower) ||
-      vendorName.toLowerCase().includes(searchLower) ||
-      String(netPayment).includes(search) ||
-      billDate.toLowerCase().includes(searchLower)
+      bill.billNo?.toLowerCase().includes(search.toLowerCase()) ||
+      woNo.toLowerCase().includes(search.toLowerCase()) ||
+      vendorName.toLowerCase().includes(search.toLowerCase()) ||
+      String(bill.netPayment).includes(search) ||
+      billDate.toLowerCase().includes(search.toLowerCase())
     );
   });
 
@@ -311,12 +398,11 @@ export default function BillPage() {
   );
 
   const totalBills = bills.length;
-  const uniqueWorkOrders = new Set(bills.map(b => getWorkOrderNo(b.workOrder)).filter(Boolean)).size;
-  const uniqueVendors = new Set(bills.map(b => getWorkOrderVendor(getWorkOrderNo(b.workOrder))).filter(Boolean)).size;
+  const uniqueWorkOrders = new Set(bills.map(b => getWorkOrderNo(b.workOrder))).size;
+  const uniqueVendors = new Set(bills.map(b => getWorkOrderVendor(getWorkOrderNo(b.workOrder)))).size;
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const thisMonthBills = bills.filter(b => {
-    if (!b.createdAt) return false;
     const billDate = new Date(b.createdAt);
     return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
   }).length;
@@ -340,9 +426,9 @@ export default function BillPage() {
   };
 
   const updateViewDeduction = (index, field, value) => {
-    const newDeductions = [...viewDeductions];
-    newDeductions[index][field] = value;
-    setViewDeductions(newDeductions);
+    const newViewDeductions = [...viewDeductions];
+    newViewDeductions[index][field] = value;
+    setViewDeductions(newViewDeductions);
   };
 
   const removeViewDeduction = (index) => {
@@ -383,9 +469,10 @@ export default function BillPage() {
                 className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                 onClick={() => {
                   setIsCreateOpen(true);
-                  setCreateForm(initialCreateForm);
+                  setCreateForm({ ...initialCreateForm, projectId: projectId || '' });
                   setDeductions([]);
                 }}
+                disabled={loading || !workOrders.length}
               >
                 <Plus size={18} />
                 Create Bill
@@ -491,7 +578,7 @@ export default function BillPage() {
                         {/* Bill No */}
                         <div className="flex flex-col items-center text-center p-3 bg-blue-50 rounded-lg">
                           <p className="text-xs font-medium text-gray-500 mb-2">Bill No</p>
-                          <p className="font-semibold text-gray-900 text-sm">{bill.billNo || 'N/A'}</p>
+                          <p className="font-semibold text-gray-900 text-sm">{bill.billNo}</p>
                         </div>
                         
                         {/* Work Order No */}
@@ -518,15 +605,16 @@ export default function BillPage() {
                         <button 
                           className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition" 
                           title="View"
-                          onClick={() => {
-                            setSelectedBill(bill);
-                            setViewForm({ ...bill });
-                            setViewDeductions(bill.items || []);
-                            setIsViewOpen(true);
-                            setIsEditMode(false);
-                          }}
+                          onClick={() => handleView(bill._id)}
                         >
                           <Eye size={16} />
+                        </button>
+                        <button 
+                          className="p-2 rounded-lg bg-green-50 hover:bg-green-100 text-green-700 transition" 
+                          title="Edit"
+                          onClick={() => handleEdit(bill._id)}
+                        >
+                          <Edit2 size={16} />
                         </button>
                         <button 
                           className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 transition" 
@@ -544,50 +632,48 @@ export default function BillPage() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4 text-gray-600">
-              <div className="text-sm">
-                Showing {paginatedBills.length} of {filteredBills.length} bills
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4 text-gray-600">
+            <div className="text-sm">
+              Showing {paginatedBills.length} of {filteredBills.length} bills
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium ${currentPage === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
+                  >
+                    {page}
+                  </button>
+                ))}
               </div>
               
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
-                >
-                  <ChevronLeft size={16} />
-                  Previous
-                </button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium ${currentPage === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
-                >
-                  Next
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-              
-              <button className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
-                <HelpCircle size={16} />
-                Need Help?
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm font-medium"
+              >
+                Next
+                <ChevronRight size={16} />
               </button>
             </div>
-          )}
+            
+            <button className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+              <HelpCircle size={16} />
+              Need Help?
+            </button>
+          </div>
         </div>
       </div>
 
@@ -601,7 +687,7 @@ export default function BillPage() {
             exit={{ opacity: 0, scale: 0.95 }}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Create Bill</h2>
+              <h2 className="text-xl font-bold text-gray-900">Create Bill for {currentProject?.name || 'Loading...'}</h2>
               <button onClick={() => setIsCreateOpen(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={24} />
               </button>
@@ -611,7 +697,7 @@ export default function BillPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Work Order *</label>
                 <select
                   value={createForm.workOrder}
-                  onChange={(e) => handleWorkOrderChange(e.target.value, setCreateForm)}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, workOrder: e.target.value }))}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 >
@@ -620,12 +706,16 @@ export default function BillPage() {
                     <option key={wo._id} value={wo._id}>{wo.workOrderNo}</option>
                   ))}
                 </select>
+                {!workOrders.length && (
+                  <p className="text-sm text-gray-500 mt-1">No work orders available.</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Advance Payment</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Advance Payment *</label>
                 <select
                   value={createForm.advancePayment}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, advancePayment: e.target.value }))}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                 >
                   <option value="">Select Advance Payment</option>
@@ -657,7 +747,7 @@ export default function BillPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Retention Amount</label>
                 <input
                   type="number"
-                  value={createForm.retantionAmount}  // Matches schema: retantionAmount
+                  value={createForm.retantionAmount}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, retantionAmount: parseFloat(e.target.value) || 0 }))}
                   step="0.01"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
@@ -765,14 +855,18 @@ export default function BillPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Bill No</label>
-                <p className="text-gray-900">{selectedBill.billNo || 'N/A'}</p>
+                <p className="text-gray-900">{selectedBill.billNo}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                <p className="text-gray-900">{currentProject?.name || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Work Order</label>
                 {isEditMode ? (
                   <select
                     value={viewForm.workOrder || ''}
-                    onChange={(e) => handleWorkOrderChange(e.target.value, setViewForm)}
+                    onChange={(e) => setViewForm(prev => ({ ...prev, workOrder: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   >
                     <option value="">Select Work Order</option>
@@ -798,7 +892,7 @@ export default function BillPage() {
                     ))}
                   </select>
                 ) : (
-                  <p className="text-gray-900">{selectedBill.advancePayment ? selectedBill.advancePayment.paymentNo : 'N/A'}</p>
+                  <p className="text-gray-900">{getAdvancePaymentNo(selectedBill.advancePayment)}</p>
                 )}
               </div>
               <div>
@@ -833,13 +927,13 @@ export default function BillPage() {
                 {isEditMode ? (
                   <input
                     type="number"
-                    value={viewForm.retantionAmount || ''}  // Matches schema: retantionAmount
+                    value={viewForm.retantionAmount || ''}
                     onChange={(e) => setViewForm(prev => ({ ...prev, retantionAmount: parseFloat(e.target.value) || 0 }))}
                     step="0.01"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   />
                 ) : (
-                  <p className="text-gray-900">₹{formatAmount(selectedBill.retantionAmount)}</p>  // Matches schema: retantionAmount
+                  <p className="text-gray-900">₹{formatAmount(selectedBill.retantionAmount)}</p>
                 )}
               </div>
               <div>

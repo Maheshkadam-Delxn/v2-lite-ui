@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Header from './landing/Header';
 import Hero from './landing/Hero';
-import Services from './landing./Services';
+import Services from './landing/Services';
 import Process from './landing/Process';
 import Features from './landing/Features';
 import Testimonials from './landing/Testimonials';

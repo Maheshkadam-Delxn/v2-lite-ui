@@ -117,11 +117,111 @@ const tabs = [
 
 const statusOptions = ["All", "Active", "Inactive"];
 
+const permissionsConfig = {
+  "Project Admin": {
+    modules: [
+      { name: "Material", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Indent", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Consumption", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Bill Payment", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ Item", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Submittal Log", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Approval Request", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Activity", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Product", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Inspection Report", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Change BOQ", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Dashboard", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Document", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Drawing", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ", add: true, update: true, delete: true, view: true, menuVisible: true, recordAccess: "All" },
+    ]
+  },
+  "Consultant": {
+    modules: [
+      { name: "Material", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Indent", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Consumption", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Bill Payment", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ Item", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Submittal Log", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Approval Request", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Activity", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Product", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Inspection Report", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Change BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Dashboard", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Document", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Drawing", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+    ]
+  },
+  "Approver": {
+    modules: [
+      { name: "Material", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Indent", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Consumption", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Bill Payment", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ Item", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Submittal Log", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Approval Request", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Activity", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Product", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Inspection Report", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Change BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Dashboard", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Document", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Drawing", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+    ]
+  },
+  "Contractor": {
+    modules: [
+      { name: "Material", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "Specific" },
+      { name: "Indent", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Material Consumption", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "Specific" },
+      { name: "Bill Payment", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "BOQ Item", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Submittal Log", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Material Approval Request", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Activity", add: true, update: true, delete: false, view: true, menuVisible: true, recordAccess: "Specific" },
+      { name: "Product", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Inspection Report", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Change BOQ", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Dashboard", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+      { name: "Document", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "Specific" },
+      { name: "Drawing", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "Specific" },
+      { name: "BOQ", add: false, update: false, delete: false, view: true, menuVisible: false, recordAccess: "Specific" },
+    ]
+  },
+  "Viewer": {
+    modules: [
+      { name: "Material", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Indent", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Consumption", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Bill Payment", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ Item", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Submittal Log", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Material Approval Request", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Activity", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Product", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Inspection Report", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Change BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Dashboard", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Document", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "Drawing", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+      { name: "BOQ", add: false, update: false, delete: false, view: true, menuVisible: true, recordAccess: "All" },
+    ]
+  },
+};
+
 export default function EnhancedPermissionsPage() {
   const [activeTab, setActiveTab] = useState("roles");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [memberSearch, setMemberSearch] = useState("");
@@ -240,6 +340,129 @@ export default function EnhancedPermissionsPage() {
       )}
     </AnimatePresence>
   );
+
+  const ViewPermissionsModal = () => {
+    if (!selectedRole) {
+      return null;
+    }
+
+    const roleConfig = permissionsConfig[selectedRole.name] || { modules: [] };
+
+    const modules = roleConfig.modules;
+
+    return (
+      <AnimatePresence>
+        {showViewModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowViewModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 className="text-xl font-semibold text-gray-800">Manage Who Can View</h3>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-black mb-2">Role</label>
+                <select
+                  value={selectedRole.name}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-black cursor-not-allowed"
+                >
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.name}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                {modules.map((module, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-black">{module.name}</h4>
+                      <div className="flex items-center space-x-6">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name={`record-${index}`}
+                            checked={module.recordAccess === "All"}
+                            disabled
+                            className="text-blue-600"
+                          />
+                          <span className="text-sm text-black">All</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name={`record-${index}`}
+                            checked={module.recordAccess === "Specific"}
+                            disabled
+                            className="text-blue-600"
+                          />
+                          <span className="text-sm text-black">Specific</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      {[
+                        { key: "add", label: "Add" },
+                        { key: "update", label: "Update" },
+                        { key: "delete", label: "Delete" },
+                        { key: "view", label: "View" },
+                        { key: "menuVisible", label: "Menu Visible" },
+                      ].map((action) => (
+                        <label key={action.key} className="flex items-center space-x-2 cursor-not-allowed">
+                          <input
+                            type="checkbox"
+                            checked={module[action.key]}
+                            disabled
+                            className="text-blue-600 bg-gray-100 border-gray-300 rounded cursor-not-allowed"
+                          />
+                          <span className="text-sm text-black">{action.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Close
+                </button>
+                <button
+                  disabled
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg cursor-not-allowed opacity-50"
+                >
+                  Save changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -383,7 +606,14 @@ export default function EnhancedPermissionsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 ml-4">
-                      <button className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition" title="View">
+                      <button 
+                        onClick={() => {
+                          setSelectedRole(role);
+                          setShowViewModal(true);
+                        }}
+                        className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 transition" 
+                        title="View"
+                      >
                         <Eye size={16} />
                       </button>
                       <button className="p-2 rounded-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-600 transition" title="Edit">
@@ -985,6 +1215,7 @@ export default function EnhancedPermissionsPage() {
   
 
       <CreateRoleModal />
+      <ViewPermissionsModal />
     </div>
   );
 }

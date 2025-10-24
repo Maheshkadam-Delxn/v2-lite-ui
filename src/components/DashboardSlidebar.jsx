@@ -42,17 +42,20 @@ const DashboardSlidebar = () => {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
+      console.log(headers);
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/projects`, {
-        headers,
+    
       });
+      // const dd = await response.json();
+      // console.log(response.ok);
+      // console.log("deadsf",dd);
       if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Response is not JSON');
-        }
-        const { success, projects } = await response.json();
-        if (success) {
-          setMyProjects(projects || []);
+    
+       
+        const result = await response.json();
+        if (result.success) {
+          console.log("d",result.projects);
+          setMyProjects(result.projects || []);
         } else {
           console.error('API error:', projects?.message);
         }
@@ -394,7 +397,7 @@ const DashboardSlidebar = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+              
             >
               <div style={{ position: "relative" }}>
                 <div
@@ -437,7 +440,7 @@ const DashboardSlidebar = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+              
               style={{
                 background:
                   "linear-gradient(to bottom right, #dbeafe, #eff6ff)",

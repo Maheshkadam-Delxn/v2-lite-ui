@@ -1536,6 +1536,365 @@ let rolePermissionsStorage = {
   }
 };
 
+let userProjectPermissionsStorage = {
+  "jay.sharma@example.com":{
+    "Granite Horizon":{
+      "Material":{add:true,update:true,delete:false,view:true},
+      "RFI":{add:true,update:false,delete:false,view:true}
+    }
+  }
+};
+
+const ManageUserPermissionModal = ({isOpen,onClose,onSave}) => {
+  const [selectedUser,setSelectedUser] = useState("");
+  const [selectedService,setSelectedService] = useState("CONSTRUCTION");
+  const [selectedProject,setSelectedProject] = useState("");
+  const [modulePermissions,setModulePermissions] = useState([]);
+  const [recordAccessSettings,setRecordAcessSettings] = useState({});
+
+  useEffect(() => {
+    if(isOpen){
+      setSelectedUser("");
+      setSelectedService("CONSTRUCTION");
+      setSelectedProject("");
+      setModulePermissions([]);
+    }
+  },[isOpen]);
+
+  useEffect(() => {
+    if(selectedUser && selectedProject){
+      const user = members.find(m => m.email === selectedUser);
+      if(!user) return;
+
+      const updatedModules = modules.map(module => {
+        const basePermissions = rolePermissionsStorage[user.roleKey]?.[module.name] || {};
+
+        const existingExtraPermissions = userProjectPermissionsStorage[selectedUser]?.[selectedProject]?.[module.name] || {};
+
+        return {
+          ...module,
+          permissions:{...basePermissions},
+          basePermissions:{...basePermissions},
+          existingExtraPermissions:{...existingExtraPermissions}
+        };
+      });
+
+      setModulePermissions(updatedModules);
+
+      const settings = {};
+      modules.forEach(module => {
+        if(module.hasRecordAccess){
+          settings[module.id] = 'all';
+        }
+      });
+
+      setRecordAcessSettings(settings);
+    }
+  },[selectedUser,selectedProject]);
+
+  const handleClose = useCallback(() => {
+    setSelectedUser("");
+    setSelectedService("CONSTRUCTION");
+    setSelectedProject("");
+    setModulePermissions([]);
+    setRecordAccessSettings({});
+    onClose();
+  }, [onClose]);
+
+  const handleSave = useCallback(() => {
+    if (selectedUser && selectedProject) {
+      const user = members.find(m => m.email === selectedUser);
+      if (!user) return;
+
+      const permissionsData = {};
+      let hasExtraPermissions = false;
+
+      modulePermissions.forEach(module => {
+        const extraPermissions = {};
+        let hasModuleExtraPermissions = false;
+
+        // Only include permissions that are different from base role
+        Object.keys(module.permissions).forEach(permissionKey => {
+          const baseValue = module.basePermissions[permissionKey];
+          const currentValue = module.permissions[permissionKey];
+          
+          if (currentValue !== baseValue) {
+            extraPermissions[permissionKey] = currentValue;
+            hasModuleExtraPermissions = true;
+            hasExtraPermissions = true;
+          }
+        });
+
+        if (hasModuleExtraPermissions) {
+          permissionsData[module.name] = { 
+            ...extraPermissions,
+            ...(module.hasRecordAccess && { recordAccess: recordAccessSettings[module.id] })
+          };
+        }
+      });
+
+      if (hasExtraPermissions) {
+        onSave({
+          user: selectedUser,
+          project: selectedProject,
+          service: selectedService,
+          permissions: permissionsData
+        });
+      } else {
+        // If no extra permissions, remove any existing ones
+        onSave({
+          user: selectedUser,
+          project: selectedProject,
+          service: selectedService,
+          permissions: {} // Empty means remove extra permissions
+        });
+      }
+
+      handleClose();
+    }
+  }, [selectedUser, selectedProject, selectedService, modulePermissions, recordAccessSettings, onSave, handleClose]);
+
+  const togglePermission = useCallback((moduleId, permissionKey) => {
+    setModulePermissions(prev => 
+      prev.map(module => {
+        if (module.id === moduleId) {
+          return {
+            ...module,
+            permissions: {
+              ...module.permissions,
+              [permissionKey]: !module.permissions[permissionKey]
+            }
+          };
+        }
+        return module;
+      })
+    );
+  }, []);
+
+  const isPermissionDifferentFromBase = useCallback((module, permissionKey) => {
+    const baseValue = module.basePermissions[permissionKey];
+    const currentValue = module.permissions[permissionKey];
+    return currentValue !== baseValue;
+  }, []);
+
+  const handleRecordAccessChange = useCallback((moduleId, value) => {
+    setRecordAccessSettings(prev => ({
+      ...prev,
+      [moduleId]: value
+    }));
+  }, []);
+
+  const getFilteredProjects = useMemo(() => {
+    return projects.filter(project => project.service === selectedService);
+  }, [selectedService]);
+
+  if (!isOpen) return null;
+
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        onClick={handleClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center px-6 py-4 bg-purple-600 text-white">
+            <h3 className="text-lg font-semibold">Manage User Project Permissions</h3>
+            <button
+              onClick={handleClose}
+              className="p-1 hover:bg-purple-700 rounded transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="p-6 overflow-y-auto max-h-[70vh]">
+            {/* User, Service and Project Selection */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select User</label>
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">Select User</option>
+                  {members.map((user) => (
+                    <option key={user.id} value={user.email}>
+                      {user.name} ({user.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
+                <select
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="CONSTRUCTION">CONSTRUCTION</option>
+                  <option value="DESIGN">DESIGN</option>
+                  <option value="CONSULTING">CONSULTING</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Project</label>
+                <select
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  disabled={!selectedService}
+                >
+                  <option value="">Select Project</option>
+                  {getFilteredProjects.map((project) => (
+                    <option key={project.id} value={project.name}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedUser && selectedProject && (
+              <>
+                <div className="mb-4 p-4 bg-purple-50 rounded-lg">
+                  <h4 className="font-semibold text-purple-800">
+                    Granting Extra Permissions for: {members.find(u => u.email === selectedUser)?.name}
+                  </h4>
+                  <p className="text-purple-600 text-sm mt-1">
+                    Base Role: <span className="font-medium">{members.find(u => u.email === selectedUser)?.role}</span> | 
+                    Project: <span className="font-medium">{selectedProject}</span>
+                  </p>
+                  <p className="text-purple-500 text-xs mt-2">
+                    💡 Only check permissions that should be <strong>added</strong> to the user's base role for this specific project
+                  </p>
+                </div>
+
+                {/* Module Permissions List */}
+                <div className="space-y-3 bg-gray-50 p-4 rounded-lg">
+                  {modulePermissions.map((module) => (
+                    <div key={module.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      {/* Module Header */}
+                      <div className="flex items-center justify-between p-4 bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-gray-900">{module.name}</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Base Role Permissions
+                        </div>
+                      </div>
+
+                      {/* Permission Checkboxes */}
+                      <div className="px-4 pb-4">
+                        <div className="flex flex-wrap gap-x-6 gap-y-3">
+                          {Object.entries(module.permissions).map(([permissionKey, isChecked]) => {
+                            const isDifferent = isPermissionDifferentFromBase(module, permissionKey);
+                            const baseValue = module.basePermissions[permissionKey];
+                            
+                            return (
+                              <div key={permissionKey} className="flex items-center gap-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => togglePermission(module.id, permissionKey)}
+                                    className={`w-4 h-4 rounded focus:ring-2 ${
+                                      isDifferent 
+                                        ? 'text-purple-600 bg-purple-100 border-purple-300 focus:ring-purple-500'
+                                        : 'text-gray-400 bg-gray-100 border-gray-300 focus:ring-gray-500'
+                                    }`}
+                                  />
+                                  <span className={`text-sm capitalize ${
+                                    isDifferent ? 'text-purple-700 font-medium' : 'text-gray-600'
+                                  }`}>
+                                    {permissionKey === 'menuVisible' ? 'Menu Visible' : 
+                                     permissionKey === 'recordAccess' ? 'Record Access' :
+                                     permissionKey === 'saveChanges' ? 'Save changes' : permissionKey}
+                                  </span>
+                                </label>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  baseValue 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
+                                  Base: {baseValue ? 'Yes' : 'No'}
+                                </span>
+                                {isDifferent && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                    Extra
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Radio buttons for modules with recordAccess */}
+                        {module.hasRecordAccess && (
+                          <div className="flex items-center gap-6 mt-3 pl-6">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`recordAccess-${module.id}`}
+                                checked={recordAccessSettings[module.id] === 'all'}
+                                onChange={() => handleRecordAccessChange(module.id, 'all')}
+                                className="w-4 h-4 text-purple-600"
+                              />
+                              <span className="text-sm text-gray-700">All Records</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="radio"
+                                name={`recordAccess-${module.id}`}
+                                checked={recordAccessSettings[module.id] === 'specific'}
+                                onChange={() => handleRecordAccessChange(module.id, 'specific')}
+                                className="w-4 h-4 text-purple-600"
+                              />
+                              <span className="text-sm text-gray-700">Specific Records</span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <button
+              onClick={handleClose}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white transition"
+            >
+              Close
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!selectedUser || !selectedProject}
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+            >
+              Save Extra Permissions
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 // Create/Edit Role Modal Component
 const CreateEditRoleModal = ({ isOpen, onClose, onCreate, onUpdate, editRole }) => {
   const [roleName, setRoleName] = useState("");
@@ -2044,7 +2403,7 @@ const ViewPermissionsModal = ({ isOpen, onClose, role }) => {
   const [modulePermissions, setModulePermissions] = useState([]);
 
   useEffect(() => {
-    if (isOpen && role) {
+    if (isOpen && user) {
       const roleKey = roles.find(r => r.name === role.name)?.key;
       if (roleKey && rolePermissionsStorage[roleKey]) {
         const permissionsData = modules.map(module => {

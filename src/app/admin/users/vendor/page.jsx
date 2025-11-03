@@ -110,6 +110,73 @@ const VendorPage = () => {
     }
   };
 
+
+  const handleDocumentUpload = async (vendorId,file) => {
+    if(!file) return;
+
+    try{
+      const maxSize = 5.0 * 1024 *1024;
+      if(file.size > maxSize){
+        throw new Error('File size exceeds');
+      }
+
+      const allowedTypes = [
+        'application/pdf',
+        'application/jpg'
+      ];
+
+      if(!allowedTypes.includes(file.type)){
+        throw new Error('Please upload PDF or image files only');
+      }
+
+      const formData = new FormData();
+      formData.append('file',file);
+
+      const uploadResponse = await fetch('/api/upload',{
+        method:'POST',
+        body:formData,
+      });
+
+      if(!uploadResponse.ok){
+        const errorData = await uploadResponse.json();
+        throw new Error(`Upload failed: ${uploadResponse.status} - ${errorData.error || 'Unknown error'}`);
+      }
+
+      const uploadResult = await uploadResponse.json();
+
+      if(!uploadResult.url){
+        throw new Error('No URL returned from upload');
+      }
+
+      const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/vendor/${vendorId}`,{
+        method:'PATCH',
+        headers:{
+          'Content-Type':'application/json',
+        },
+        body:JSON.stringify({
+          $push:{documents:uploadResult.url}
+        })
+      });
+
+      if(!updateResponse.ok){
+        const errorData = await updateResponse.json();
+        throw new Error(`Failed to update vendor documents: ${updateResponse.status} - ${errorData.error || 'Unknown error'}`);
+      }
+
+      const updateResult = await updateResponse.json();
+
+      if(updateResult.message === 'Vendor updated successfully'){
+        await fetchVendors();
+        return updateResult.vendor;
+      }else{
+        throw new Error(updateResult.error || 'Failed to update vendor documents');
+      }
+    }catch(err){
+      console.log('Error uploading document',err);
+      throw err;
+    }
+  };
+
   // Update vendor
   const updateVendor = async (vendorId, updateData) => {
     try {
@@ -376,16 +443,17 @@ const VendorPage = () => {
   console.log(editingVendor);
   
   const handleFileUpload = async (vendorId, event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-    try {
-      await uploadDocument(vendorId, file);
-      alert('Document uploaded successfully!');
-    } catch (err) {
-      alert(`Error uploading document: ${err.message}`);
-    }
-  };
+  try {
+    await handleDocumentUpload(vendorId, file);
+    alert('Document uploaded successfully!');
+    event.target.value = ''; // Reset file input
+  } catch (err) {
+    alert(`Error uploading document: ${err.message}`);
+  }
+};
 
   if (loading) {
     return (
@@ -760,11 +828,35 @@ const VendorPage = () => {
                   </label>
                   <input
                     type="file"
-                    onChange={(e) => handleFileUpload(vendor._id, e)}
+                    onChange={(e) => handleFileUpload(vendors._id, e)}
                     className="w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    accept='.pdf,.jpg'
                   />
+                  <p className='text-xs text-gray-500 mt-1'>PDF or image up to 5MB</p>
                 </div>
 
+                {/* Display existing document */}
+                {vendors.documents && vendors.documents.length > 0 && (
+                  <div className='mt-3'>
+                      <p className='text-xs text-gray-500 font-medium uppercase tracking-wide mb-2'>
+                        Documents({vendors.documents.length})
+                      </p>
+                      <div className='space-y-2'>
+                        {vendors.documents.map((docUrl,index) => (
+                          <div key={index} className='flex items-center justify-between bg-gray-50 rounded-lg p-2'>
+                              <a href={docUrl} target='_blank' rel='noopener noreferrer' className='text-sm text-blue-600 hover:text-blue-800 truncate flex-1'>
+                                Document {index+1}
+                              </a>
+                              <button onClick={() => window.open(docUrl,'_blank')} 
+                                className='text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200'
+                                >
+                                    View
+                              </button>
+                          </div>
+                        ))}
+                      </div>
+                  </div>
+                )}
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-1">Address *</label>

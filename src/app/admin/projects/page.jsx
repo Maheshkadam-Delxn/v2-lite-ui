@@ -602,10 +602,10 @@ const ProjectsPage = () => {
   // Filter projects
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (project.location &&
-        project.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      project.status.toLowerCase().includes(searchTerm.toLowerCase());
+        project.location?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      project.status?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (activeTab === "All Projects") return matchesSearch;
     return matchesSearch && project.status === activeTab;

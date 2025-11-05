@@ -237,7 +237,7 @@
 //         ? [{ name: "Loading projects...", path: "#", icon: Clock }]
 //         : myProjects.length > 0
 //         ? myProjects.map((project) => ({
-//             name: project.name,
+//             name: project.project_name,
 //             path: `/admin/my-projects/${project._id}/dashboard`,
 //             icon: FolderOpen,
 //           }))
@@ -1157,7 +1157,7 @@ const DashboardSlidebar = () => {
         ? [{ name: "Loading projects...", path: "#", icon: Clock }]
         : myProjects.length > 0
         ? myProjects.map((project) => ({
-            name: project.name,
+            name: project.project_name,
             path: `/admin/my-projects/${project._id}/dashboard`,
             icon: FolderOpen,
           }))

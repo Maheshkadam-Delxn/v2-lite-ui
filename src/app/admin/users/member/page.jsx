@@ -619,7 +619,7 @@
 //                               {availableProjects.map((project) => (
 //                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-blue-300 cursor-move text-sm">
 //                                   <GripVertical className="w-4 h-4 text-gray-400" />
-//                                   <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+//                                   <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
 //                                   <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add</button>
 //                                 </div>
 //                               ))}
@@ -635,7 +635,7 @@
 //                               {selectedProjects.map((project) => (
 //                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-200 hover:border-blue-500 cursor-move text-sm">
 //                                   <GripVertical className="w-4 h-4 text-blue-400" />
-//                                   <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+//                                   <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
 //                                   <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Remove</button>
 //                                 </div>
 //                               ))}
@@ -776,7 +776,7 @@
 //                         {availableProjects.map((project) => (
 //                           <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300 cursor-move">
 //                             <GripVertical className="w-4 h-4 text-gray-400" />
-//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.name}</span>
+//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.project_name}</span>
 //                             <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600">Add</button>
 //                           </div>
 //                         ))}
@@ -791,7 +791,7 @@
 //                         {selectedProjects.map((project) => (
 //                           <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-blue-200 hover:border-blue-500 cursor-move">
 //                             <GripVertical className="w-4 h-4 text-blue-400" />
-//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.name}</span>
+//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.project_name}</span>
 //                             <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">Remove</button>
 //                           </div>
 //                         ))}
@@ -1708,7 +1708,7 @@ const MembersPage = () => {
                               {availableProjects.map((project) => (
                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-blue-300 cursor-move text-sm">
                                   <GripVertical className="w-4 h-4 text-gray-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
                                   <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add</button>
                                 </div>
                               ))}
@@ -1724,7 +1724,7 @@ const MembersPage = () => {
                               {selectedProjects.map((project) => (
                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-200 hover:border-blue-500 cursor-move text-sm">
                                   <GripVertical className="w-4 h-4 text-blue-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
                                   <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Remove</button>
                                 </div>
                               ))}
@@ -2009,7 +2009,7 @@ const MembersPage = () => {
                               {availableProjects.map((project) => (
                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-blue-300 cursor-move text-sm">
                                   <GripVertical className="w-4 h-4 text-gray-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
                                   <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add</button>
                                 </div>
                               ))}
@@ -2025,7 +2025,7 @@ const MembersPage = () => {
                               {selectedProjects.map((project) => (
                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-200 hover:border-blue-500 cursor-move text-sm">
                                   <GripVertical className="w-4 h-4 text-blue-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.name}</span>
+                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
                                   <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Remove</button>
                                 </div>
                               ))}

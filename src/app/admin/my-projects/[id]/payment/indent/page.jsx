@@ -126,7 +126,7 @@ export default function IndentPage() {
           const roleName = role ? role.name : (typeof m.role === 'string' ? m.role : m.role?._id || 'Unknown');
           const projectNames = (m.projects || []).map(projectId => {
             const project = projectsData.find(p => p.id === projectId);
-            return project ? project.name : 'Unknown Project';
+            return project ? project.project_name : 'Unknown Project';
           }).filter(name => name !== 'Unknown Project');
 
           return {

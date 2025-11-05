@@ -478,7 +478,7 @@ export default function ExpensePage() {
                     <option value="">Select Project</option>
                     {projects.map((project) => (
                       <option key={project.id} value={project.id}>
-                        {project.name}
+                        {project.project_name}
                       </option>
                     ))}
                   </select>

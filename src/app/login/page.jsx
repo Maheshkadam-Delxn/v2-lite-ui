@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch('https://v2-lite-api.vercel.app/api/auth/login', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_PATH}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),

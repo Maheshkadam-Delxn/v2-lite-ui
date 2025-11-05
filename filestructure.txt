@@ -124,6 +124,17 @@
         |-- layout.js
         |-- login
             |-- page.jsx
+        |-- members
+            |-- layout.js
+            |-- my-projects
+                |-- page.jsx
+                |-- [id]
+                    |-- approvals
+                        |-- rfi
+                            |-- page.jsx
+                    |-- dashboard
+                        |-- page.jsx
+            |-- page.js
         |-- page.js
         |-- register
             |-- page.jsx

@@ -1,3 +1,4 @@
+
 // 'use client';
 // import { useState, useEffect, useRef, useCallback } from 'react';
 // import { motion, AnimatePresence } from 'framer-motion';
@@ -18,7 +19,8 @@
 //   const [loading, setLoading] = useState({
 //     image: false,
 //     submit: false,
-//     page: true
+//     page: true,
+//     delete: false
 //   });
 
 //   // Modals
@@ -65,9 +67,18 @@
 
 //   const fetchRoles = async () => {
 //     try {
-//       const res = await fetch(`${apiBase}/api/role`);
-//       const { success, roles } = await res.json();
-//       return success ? roles.map(r => ({ id: r._id, name: r.roleName })) : [];
+//       const res = await fetch(`http://localhost:3001/api/role`,{
+//          headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+//         },
+//       });
+
+//       console.log("res",res);
+//       const { success, data } = await res.json();
+
+//       console.log("Roles",data);
+//       return success ? data.map(r => ({ id: r._id, name: r.roleName })) : [];
 //     } catch {
 //       return [];
 //     }
@@ -131,6 +142,44 @@
 //     }
 //   };
 
+//   // Delete member handler
+//   const handleDeleteMember = async (memberId) => {
+//     console.log(memberId);
+//     if (!confirm('Are you sure you want to delete this member? This action cannot be undone.')) {
+//       return;
+//     }
+
+//     setLoading(prev => ({ ...prev, delete: true }));
+//     try {
+//       const token = sessionStorage.getItem('token') || '';
+//       const headers = { 
+//         'Content-Type': 'application/json',
+//         Accept: 'application/json'
+//       };
+//       if (token) headers.Authorization = `Bearer ${token}`;
+
+//       const res = await fetch(`${apiBase}/api/member/delete/${memberId}`, {
+//         method: 'DELETE',
+//         headers
+//       });
+
+//       const data = await res.json();
+
+//       if (data.success) {
+//         // Remove the member from the local state
+//         setMembers(prev => prev.filter(member => member.id !== memberId));
+//         alert('Member deleted successfully');
+//       } else {
+//         alert(data.message || 'Failed to delete member');
+//       }
+//     } catch (err) {
+//       console.error('Delete error:', err);
+//       alert('Failed to delete member: ' + err.message);
+//     } finally {
+//       setLoading(prev => ({ ...prev, delete: false }));
+//     }
+//   };
+
 //   // Image upload handler
 //   const handleImageUpload = async (file) => {
 //     if (!file) return;
@@ -153,7 +202,7 @@
 //     } finally {
 //       setLoading(prev => ({ ...prev, image: false }));
 //     }
-//   };
+//   }; 
 
 //   // Drag & drop handlers
 //   const handleDragStart = (e, project, source) => {
@@ -242,7 +291,12 @@
 //       const headers = { 'Content-Type': 'application/json' };
 //       if (token) headers.Authorization = `Bearer ${token}`;
 
-//       const payload = { ...selectedMember, projects: selectedProjects.map(p => p.id) };
+//       const payload = { 
+//         ...selectedMember, 
+//         projects: selectedProjects.map(p => p.id),
+//         department: selectedMember.department // Make sure department is included
+//       };
+      
 //       // Remove unnecessary fields
 //       const { id, avatar, icon, projectNames, roleName, ...cleanPayload } = payload;
 
@@ -352,9 +406,15 @@
 //   };
 
 //   const openEditModal = (member) => {
-//     setSelectedMember({ ...member, projects: member.projects || [] });
+//     setSelectedMember({ 
+//       ...member, 
+//       projects: member.projects || [],
+//       department: member.department || '',
+//       role: member.role || ''
+//     });
 //     initializeDragDrop(member.projects);
 //     setIsEditModalOpen(true);
+//     setCurrentStep(1); // Reset to first step when editing
 //   };
 
 //   // Effects
@@ -702,113 +762,294 @@
 //               initial={{ opacity: 0 }}
 //               animate={{ opacity: 1 }}
 //               exit={{ opacity: 0 }}
-//               className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+//               className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
 //               onClick={() => setIsEditModalOpen(false)}
 //             >
 //               <div
-//                 className="bg-white rounded-2xl shadow-lg w-full max-w-2xl"
+//                 className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
 //                 onClick={(e) => e.stopPropagation()}
 //               >
-//                 <div className="bg-blue-500 px-4 py-3 flex justify-between items-center">
-//                   <h2 className="text-xl font-bold text-white">Edit Member</h2>
-//                   <button onClick={() => setIsEditModalOpen(false)} className="text-white hover:text-blue-100">
+//                 {/* Header */}
+//                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+//                   <h2 className="text-xl font-semibold text-gray-800">Edit Member</h2>
+//                   <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
 //                     <X className="w-5 h-5" />
 //                   </button>
 //                 </div>
-//                 <form onSubmit={handleEditMember} className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-//                   <input
-//                     type="text"
-//                     placeholder="Staff Number"
-//                     value={selectedMember.staffNumber}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, staffNumber: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                     required
-//                   />
-//                   <input
-//                     type="text"
-//                     placeholder="Full Name"
-//                     value={selectedMember.name}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, name: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                     required
-//                   />
-//                   <input
-//                     type="email"
-//                     placeholder="Email"
-//                     value={selectedMember.email}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, email: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                     required
-//                   />
-//                   <input
-//                     type="text"
-//                     placeholder="Phone"
-//                     value={selectedMember.phone}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, phone: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                   />
-//                   <select
-//                     value={selectedMember.department}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, department: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                   >
-//                     <option value="">Select Department</option>
-//                     {departments.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
-//                   </select>
-//                   <select
-//                     value={selectedMember.status}
-//                     onChange={(e) => setSelectedMember({ ...selectedMember, status: e.target.value })}
-//                     className="px-3 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-//                   >
-//                     <option value="Active">Active</option>
-//                     <option value="Inactive">Inactive</option>
-//                   </select>
-//                 </form>
-//                 <div className="px-4 pb-4">
-//                   <label className="block text-sm font-medium text-black mb-3">Projects</label>
-//                   <div className="grid grid-cols-2 gap-4 h-64">
-//                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 thin-scrollbar" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'available')}>
-//                       <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-//                         <Move className="w-4 h-4" />
-//                         Available Projects
-//                       </h4>
-//                       <div className="space-y-2 h-48 overflow-y-auto thin-scrollbar">
-//                         {availableProjects.map((project) => (
-//                           <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300 cursor-move">
-//                             <GripVertical className="w-4 h-4 text-gray-400" />
-//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.project_name}</span>
-//                             <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600">Add</button>
+
+//                 {/* Progress Steps */}
+//                 <div className="px-6 py-4 border-b border-gray-100">
+//                   <div className="flex justify-center items-center">
+//                     {[
+//                       { number: 1, label: 'Personal' },
+//                       { number: 2, label: 'Work' },
+//                       { number: 3, label: 'Projects' },
+//                     ].map((step, index) => (
+//                       <div key={step.number} className="flex items-center">
+//                         <div className="flex flex-col items-center">
+//                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${currentStep >= step.number ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+//                             {currentStep > step.number ? <Check className="w-4 h-4" /> : <span>{step.number}</span>}
 //                           </div>
-//                         ))}
+//                           <span className={`text-xs mt-1 ${currentStep >= step.number ? 'text-blue-500 font-medium' : 'text-gray-500'}`}>{step.label}</span>
+//                         </div>
+//                         {index < 2 && <div className={`w-12 h-0.5 mx-2 transition-colors ${currentStep > step.number ? 'bg-blue-500' : 'bg-gray-200'}`} />}
 //                       </div>
-//                     </div>
-//                     <div className="border border-blue-300 rounded-lg p-4 bg-blue-50 thin-scrollbar" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'selected')}>
-//                       <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center gap-2">
-//                         <Briefcase className="w-4 h-4" />
-//                         Selected Projects ({selectedProjects.length})
-//                       </h4>
-//                       <div className="space-y-2 h-48 overflow-y-auto thin-scrollbar">
-//                         {selectedProjects.map((project) => (
-//                           <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-blue-200 hover:border-blue-500 cursor-move">
-//                             <GripVertical className="w-4 h-4 text-blue-400" />
-//                             <span className="flex-1 text-sm text-gray-700 truncate">{project.project_name}</span>
-//                             <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600">Remove</button>
-//                           </div>
-//                         ))}
-//                       </div>
-//                     </div>
+//                     ))}
 //                   </div>
 //                 </div>
-//                 <div className="px-4 py-4 border-t border-gray-100 flex justify-end gap-3">
-//                   <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
-//                   <button
-//                     onClick={handleEditMember}
-//                     disabled={loading.submit}
-//                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
-//                   >
-//                     {loading.submit && <Loader2 className="w-4 h-4 animate-spin" />}
-//                     Save Changes
-//                   </button>
+
+//                 {/* Scrollable Content */}
+//                 <div className="flex-1 overflow-y-auto thin-scrollbar">
+//                   <form onSubmit={handleEditMember} className="p-6">
+//                     {currentStep === 1 && (
+//                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+//                         {/* Profile Image */}
+//                         <div className="flex items-center gap-4">
+//                           <div className="relative">
+//                             <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center overflow-hidden">
+//                               {selectedMember.profileImage ? (
+//                                 <img src={selectedMember.profileImage} alt="Profile" className="w-full h-full object-cover" />
+//                               ) : loading.image ? (
+//                                 <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
+//                               ) : (
+//                                 <User className="w-6 h-6 text-gray-500" />
+//                               )}
+//                             </div>
+//                             <label htmlFor="profile-upload-edit" className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1.5 rounded-full shadow cursor-pointer">
+//                               <Camera className="w-3 h-3" />
+//                               <input
+//                                 id="profile-upload-edit"
+//                                 type="file"
+//                                 accept="image/*"
+//                                 className="hidden"
+//                                 onChange={(e) => {
+//                                   const file = e.target.files?.[0];
+//                                   if (file) handleImageUpload(file);
+//                                 }}
+//                               />
+//                             </label>
+//                           </div>
+//                           <div>
+//                             <h3 className="text-sm font-medium text-gray-700">Profile Photo</h3>
+//                             <p className="text-xs text-gray-500">Click to upload</p>
+//                           </div>
+//                         </div>
+
+//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.name}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, name: e.target.value })}
+//                               placeholder="John Doe"
+//                               className="w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                               required
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+//                             <input
+//                               type="email"
+//                               value={selectedMember.email}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, email: e.target.value })}
+//                               placeholder="xyz@gmail.com"
+//                               className="w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                               required
+//                             />
+//                           </div>
+//                           <div className="md:col-span-2">
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.phone}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, phone: e.target.value })}
+//                               placeholder="+91 000-000-0000"
+//                               className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+//                             <select
+//                               value={selectedMember.department}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, department: e.target.value })}
+//                               className="w-full px-3 text-black py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             >
+//                               <option value="">Select department</option>
+//                               {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+//                             </select>
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+//                             <select
+//                               value={selectedMember.role}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, role: e.target.value })}
+//                               className="w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             >
+//                               <option value="">Select role</option>
+//                               {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+//                             </select>
+//                           </div>
+//                         </div>
+//                       </motion.div>
+//                     )}
+
+//                     {currentStep === 2 && (
+//                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Staff Number <span className="text-red-500">*</span></label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.staffNumber}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, staffNumber: e.target.value })}
+//                               placeholder="EMP-001"
+//                               className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                               required
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.code}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, code: e.target.value })}
+//                               placeholder="ENG-101"
+//                               className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.grade}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, grade: e.target.value })}
+//                               placeholder="Senior, Level 3"
+//                               className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Discipline</label>
+//                             <input
+//                               type="text"
+//                               value={selectedMember.discipline}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, discipline: e.target.value })}
+//                               placeholder="Mechanical, Software"
+//                               className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             />
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
+//                             <select
+//                               value={selectedMember.prefferedLanguage}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, prefferedLanguage: e.target.value })}
+//                               className="w-full text-black px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             >
+//                               <option value="English">English</option>
+//                               <option value="Spanish">Spanish</option>
+//                               <option value="French">French</option>
+//                               <option value="German">German</option>
+//                               <option value="Chinese">Chinese</option>
+//                             </select>
+//                           </div>
+//                           <div>
+//                             <label className="block text-sm font-medium text-gray-700 mb-1">Services</label>
+//                             <select
+//                               value={selectedMember.service}
+//                               onChange={(e) => setSelectedMember({ ...selectedMember, service: e.target.value })}
+//                               className="w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+//                             >
+//                               <option value="">Select a service</option>
+//                               <option value="Construction">Construction</option>
+//                             </select>
+//                           </div>
+//                         </div>
+//                       </motion.div>
+//                     )}
+
+//                     {currentStep === 3 && (
+//                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+//                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+//                           <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 h-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'available')}>
+//                             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+//                               <FolderOpen className="w-4 h-4 text-gray-500" />
+//                               Available Projects
+//                               <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded">{availableProjects.length}</span>
+//                             </h4>
+//                             <div className="space-y-2 h-44 overflow-y-auto thin-scrollbar">
+//                               {availableProjects.map((project) => (
+//                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-blue-300 cursor-move text-sm">
+//                                   <GripVertical className="w-4 h-4 text-gray-400" />
+//                                   <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
+//                                   <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add</button>
+//                                 </div>
+//                               ))}
+//                             </div>
+//                           </div>
+//                           <div className="border border-blue-300 rounded-lg p-3 bg-blue-50 h-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'selected')}>
+//                             <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center gap-2">
+//                               <Briefcase className="w-4 h-4 text-blue-500" />
+//                               Selected Projects
+//                               <span className="ml-auto text-xs bg-blue-200 px-2 py-1 rounded">{selectedProjects.length}</span>
+//                             </h4>
+//                             <div className="space-y-2 h-44 overflow-y-auto thin-scrollbar">
+//                               {selectedProjects.map((project) => (
+//                                 <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-200 hover:border-blue-500 cursor-move text-sm">
+//                                   <GripVertical className="w-4 h-4 text-blue-400" />
+//                                   <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
+//                                   <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Remove</button>
+//                                 </div>
+//                               ))}
+//                             </div>
+//                           </div>
+//                         </div>
+//                       </motion.div>
+//                     )}
+//                   </form>
+//                 </div>
+
+//                 {/* Footer */}
+//                 <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
+//                   <div className="flex justify-between items-center">
+//                     <div className="text-xs text-gray-500">
+//                       {currentStep === 1 && 'Enter personal details'}
+//                       {currentStep === 2 && 'Assign work ID and role'}
+//                       {currentStep === 3 && 'Assign projects'}
+//                     </div>
+//                     <div className="flex gap-2">
+//                       {currentStep > 1 && (
+//                         <button type="button" onClick={() => setCurrentStep(currentStep - 1)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-sm font-medium">
+//                           Previous
+//                         </button>
+//                       )}
+//                       {currentStep < 3 ? (
+//                         <button
+//                           type="button"
+//                           onClick={() => setCurrentStep(currentStep + 1)}
+//                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+//                           disabled={
+//                             (currentStep === 1 && (!selectedMember.name || !selectedMember.email)) ||
+//                             (currentStep === 2 && !selectedMember.staffNumber)
+//                           }
+//                         >
+//                           Next <ArrowRight className="w-3 h-3" />
+//                         </button>
+//                       ) : (
+//                         <button
+//                           onClick={handleEditMember}
+//                           disabled={loading.submit}
+//                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+//                         >
+//                           {loading.submit ? (
+//                             <Loader2 className="w-4 h-4 animate-spin" />
+//                           ) : (
+//                             <Pencil className="w-4 h-4" />
+//                           )}
+//                           {loading.submit ? 'Updating...' : 'Update Member'}
+//                         </button>
+//                       )}
+//                     </div>
+//                   </div>
 //                 </div>
 //               </div>
 //             </motion.div>
@@ -1025,6 +1266,18 @@
 //                     >
 //                       Edit <Pencil className="w-4 h-4" />
 //                     </button>
+//                     <button
+//                       onClick={() => handleDeleteMember(member.id)}
+//                       disabled={loading.delete}
+//                       className="flex items-center gap-2 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50"
+//                     >
+//                       {loading.delete ? (
+//                         <Loader2 className="w-4 h-4 animate-spin" />
+//                       ) : (
+//                         <Trash2 className="w-4 h-4" />
+//                       )}
+//                       Delete
+//                     </button>
 //                   </div>
 //                 </div>
 //               </div>
@@ -1037,13 +1290,16 @@
 // };
 
 // export default MembersPage;
+
+
+
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Grid3X3, List, Plus, Pencil, X, Check,
   ArrowRight, User, Camera, GripVertical, FolderOpen,
-  UserPlus, Briefcase, Move, Trash2, Loader2
+  UserPlus, Briefcase, Move, Trash2, Loader2, Key
 } from 'lucide-react';
 const apiBase = process.env.NEXT_PUBLIC_BACKEND_API_PATH || '';
 const MembersPage = () => {
@@ -1077,6 +1333,12 @@ const MembersPage = () => {
   const [availableProjects, setAvailableProjects] = useState([]);
   const [draggedProject, setDraggedProject] = useState(null);
 
+  // Password fields for edit modal
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+
   // Department forms
   const [newDepartment, setNewDepartment] = useState({ name: '' });
   const [editDepartment, setEditDepartment] = useState(null);
@@ -1105,9 +1367,18 @@ const MembersPage = () => {
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch(`${apiBase}/api/role`);
-      const { success, roles } = await res.json();
-      return success ? roles.map(r => ({ id: r._id, name: r.roleName })) : [];
+      const res = await fetch(`http://localhost:3001/api/role`,{
+         headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+        },
+      });
+
+      console.log("res",res);
+      const { success, data } = await res.json();
+
+      console.log("Roles",data);
+      return success ? data.map(r => ({ id: r._id, name: r.roleName })) : [];
     } catch {
       return [];
     }
@@ -1209,6 +1480,50 @@ const MembersPage = () => {
     }
   };
 
+  // Update password handler
+  const handleUpdatePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, submit: true }));
+    try {
+      const token = sessionStorage.getItem('token') || '';
+      const headers = { 
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`${apiBase}/api/member/${selectedMember.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert('Password updated successfully');
+        setPasswordData({ newPassword: '', confirmPassword: '' });
+      } else {
+        alert(data.message || 'Failed to update password');
+      }
+    } catch (err) {
+      alert('Failed to update password: ' + err.message);
+    } finally {
+      setLoading(prev => ({ ...prev, submit: false }));
+    }
+  };
+
   // Image upload handler
   const handleImageUpload = async (file) => {
     if (!file) return;
@@ -1222,7 +1537,11 @@ const MembersPage = () => {
       const data = await res.json();
 
       if (data.url) {
-        setNewMember(prev => ({ ...prev, profileImage: data.url }));
+        if (isEditModalOpen && selectedMember) {
+          setSelectedMember(prev => ({ ...prev, profileImage: data.url }));
+        } else {
+          setNewMember(prev => ({ ...prev, profileImage: data.url }));
+        }
       } else {
         alert('Image upload failed');
       }
@@ -1342,6 +1661,7 @@ const MembersPage = () => {
         setIsEditModalOpen(false);
         setSelectedMember(null);
         setSelectedProjects([]);
+        setPasswordData({ newPassword: '', confirmPassword: '' }); // Reset password fields
       } else {
         alert(data.message || 'Failed to edit member');
       }
@@ -1441,6 +1761,7 @@ const MembersPage = () => {
       department: member.department || '',
       role: member.role || ''
     });
+    setPasswordData({ newPassword: '', confirmPassword: '' }); // Reset password fields
     initializeDragDrop(member.projects);
     setIsEditModalOpen(true);
     setCurrentStep(1); // Reset to first step when editing
@@ -1483,308 +1804,9 @@ const MembersPage = () => {
       <style>{scrollbarStyles}</style>
 
       <div className="max-w-7xl mx-auto">
-        {/* Add Member Modal */}
-        <AnimatePresence>
-          {isAddModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-              onClick={() => setIsAddModalOpen(false)}
-            >
-              <div
-                className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold text-gray-800">Add New Member</h2>
-                  <button onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+        {/* Add Member Modal - No changes needed here */}
 
-                {/* Progress Steps */}
-                <div className="px-6 py-4 border-b border-gray-100">
-                  <div className="flex justify-center items-center">
-                    {[
-                      { number: 1, label: 'Personal' },
-                      { number: 2, label: 'Work' },
-                      { number: 3, label: 'Projects' },
-                    ].map((step, index) => (
-                      <div key={step.number} className="flex items-center">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${currentStep >= step.number ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                            {currentStep > step.number ? <Check className="w-4 h-4" /> : <span>{step.number}</span>}
-                          </div>
-                          <span className={`text-xs mt-1 ${currentStep >= step.number ? 'text-blue-500 font-medium' : 'text-gray-500'}`}>{step.label}</span>
-                        </div>
-                        {index < 2 && <div className={`w-12 h-0.5 mx-2 transition-colors ${currentStep > step.number ? 'bg-blue-500' : 'bg-gray-200'}`} />}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto thin-scrollbar">
-                  <form onSubmit={handleAddMember} className="p-6">
-                    {currentStep === 1 && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                        {/* Profile Image */}
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <div className="w-16 h-16 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center overflow-hidden">
-                              {newMember.profileImage ? (
-                                <img src={newMember.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                              ) : loading.image ? (
-                                <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
-                              ) : (
-                                <User className="w-6 h-6 text-gray-500" />
-                              )}
-                            </div>
-                            <label htmlFor="profile-upload" className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-1.5 rounded-full shadow cursor-pointer">
-                              <Camera className="w-3 h-3" />
-                              <input
-                                id="profile-upload"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleImageUpload(file);
-                                }}
-                              />
-                            </label>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-700">Profile Photo</h3>
-                            <p className="text-xs text-gray-500">Click to upload</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
-                            <input
-                              type="text"
-                              value={newMember.name}
-                              onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                              placeholder="John Doe"
-                              className="w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
-                            <input
-                              type="email"
-                              value={newMember.email}
-                              onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                              placeholder="xyz@gmail.com"
-                              className="w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              required
-                            />
-                          </div>
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                            <input
-                              type="text"
-                              value={newMember.phone}
-                              onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
-                              placeholder="+91 000-000-0000"
-                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                            <select
-                              value={newMember.department}
-                              onChange={(e) => setNewMember({ ...newMember, department: e.target.value })}
-                              className="w-full px-3 text-black py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="">Select department</option>
-                              {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                            <select
-                              value={newMember.role}
-                              onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                              className="w-full px-3 py-2 text-black bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="">Select role</option>
-                              {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                            </select>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {currentStep === 2 && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Number <span className="text-red-500">*</span></label>
-                            <input
-                              type="text"
-                              value={newMember.staffNumber}
-                              onChange={(e) => setNewMember({ ...newMember, staffNumber: e.target.value })}
-                              placeholder="EMP-001"
-                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
-                            <input
-                              type="text"
-                              value={newMember.code}
-                              onChange={(e) => setNewMember({ ...newMember, code: e.target.value })}
-                              placeholder="ENG-101"
-                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                            <input
-                              type="text"
-                              value={newMember.grade}
-                              onChange={(e) => setNewMember({ ...newMember, grade: e.target.value })}
-                              placeholder="Senior, Level 3"
-                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Discipline</label>
-                            <input
-                              type="text"
-                              value={newMember.discipline}
-                              onChange={(e) => setNewMember({ ...newMember, discipline: e.target.value })}
-                              placeholder="Mechanical, Software"
-                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
-                            <select
-                              value={newMember.prefferedLanguage}
-                              onChange={(e) => setNewMember({ ...newMember, prefferedLanguage: e.target.value })}
-                              className="w-full text-black px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="English">English</option>
-                              <option value="Spanish">Spanish</option>
-                              <option value="French">French</option>
-                              <option value="German">German</option>
-                              <option value="Chinese">Chinese</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Services</label>
-                            <select
-                              value={newMember.service}
-                              onChange={(e) => setNewMember({ ...newMember, service: e.target.value })}
-                              className="w-full px-3 py-2 bg-white text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="">Select a service</option>
-                              <option value="Construction">Construction</option>
-                            </select>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {currentStep === 3 && (
-                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div className="border border-gray-300 rounded-lg p-3 bg-gray-50 h-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'available')}>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                              <FolderOpen className="w-4 h-4 text-gray-500" />
-                              Available Projects
-                              <span className="ml-auto text-xs bg-gray-200 px-2 py-1 rounded">{availableProjects.length}</span>
-                            </h4>
-                            <div className="space-y-2 h-44 overflow-y-auto thin-scrollbar">
-                              {availableProjects.map((project) => (
-                                <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'available')} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200 hover:border-blue-300 cursor-move text-sm">
-                                  <GripVertical className="w-4 h-4 text-gray-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
-                                  <button onClick={() => handleSelectProject(project)} className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add</button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="border border-blue-300 rounded-lg p-3 bg-blue-50 h-64" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'selected')}>
-                            <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center gap-2">
-                              <Briefcase className="w-4 h-4 text-blue-500" />
-                              Selected Projects
-                              <span className="ml-auto text-xs bg-blue-200 px-2 py-1 rounded">{selectedProjects.length}</span>
-                            </h4>
-                            <div className="space-y-2 h-44 overflow-y-auto thin-scrollbar">
-                              {selectedProjects.map((project) => (
-                                <div key={project.id} draggable onDragStart={(e) => handleDragStart(e, project, 'selected')} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-200 hover:border-blue-500 cursor-move text-sm">
-                                  <GripVertical className="w-4 h-4 text-blue-400" />
-                                  <span className="flex-1 text-gray-700 truncate">{project.project_name}</span>
-                                  <button onClick={() => handleDeselectProject(project)} className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">Remove</button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </form>
-                </div>
-
-                {/* Footer */}
-                <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs text-gray-500">
-                      {currentStep === 1 && 'Enter personal details'}
-                      {currentStep === 2 && 'Assign work ID and role'}
-                      {currentStep === 3 && 'Assign projects'}
-                    </div>
-                    <div className="flex gap-2">
-                      {currentStep > 1 && (
-                        <button type="button" onClick={() => setCurrentStep(currentStep - 1)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 text-sm font-medium">
-                          Previous
-                        </button>
-                      )}
-                      {currentStep < 3 ? (
-                        <button
-                          type="button"
-                          onClick={() => setCurrentStep(currentStep + 1)}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
-                          disabled={
-                            (currentStep === 1 && (!newMember.name || !newMember.email)) ||
-                            (currentStep === 2 && !newMember.staffNumber)
-                          }
-                        >
-                          Next <ArrowRight className="w-3 h-3" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleAddMember}
-                          disabled={loading.submit}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
-                        >
-                          {loading.submit ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <UserPlus className="w-4 h-4" />
-                          )}
-                          {loading.submit ? 'Adding...' : 'Add Member'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Edit Member Modal */}
+        {/* Edit Member Modal with Account Tab */}
         <AnimatePresence>
           {isEditModalOpen && selectedMember && (
             <motion.div
@@ -1806,13 +1828,14 @@ const MembersPage = () => {
                   </button>
                 </div>
 
-                {/* Progress Steps */}
+                {/* Progress Steps - Updated to include Account tab */}
                 <div className="px-6 py-4 border-b border-gray-100">
                   <div className="flex justify-center items-center">
                     {[
                       { number: 1, label: 'Personal' },
                       { number: 2, label: 'Work' },
                       { number: 3, label: 'Projects' },
+                      { number: 4, label: 'Account' },
                     ].map((step, index) => (
                       <div key={step.number} className="flex items-center">
                         <div className="flex flex-col items-center">
@@ -1821,7 +1844,7 @@ const MembersPage = () => {
                           </div>
                           <span className={`text-xs mt-1 ${currentStep >= step.number ? 'text-blue-500 font-medium' : 'text-gray-500'}`}>{step.label}</span>
                         </div>
-                        {index < 2 && <div className={`w-12 h-0.5 mx-2 transition-colors ${currentStep > step.number ? 'bg-blue-500' : 'bg-gray-200'}`} />}
+                        {index < 3 && <div className={`w-12 h-0.5 mx-2 transition-colors ${currentStep > step.number ? 'bg-blue-500' : 'bg-gray-200'}`} />}
                       </div>
                     ))}
                   </div>
@@ -1830,6 +1853,7 @@ const MembersPage = () => {
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto thin-scrollbar">
                   <form onSubmit={handleEditMember} className="p-6">
+                    {/* Steps 1-3 remain the same as before */}
                     {currentStep === 1 && (
                       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
                         {/* Profile Image */}
@@ -2034,6 +2058,69 @@ const MembersPage = () => {
                         </div>
                       </motion.div>
                     )}
+
+                    {/* New Account Tab */}
+                    {currentStep === 4 && (
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                            <Key className="w-6 h-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-800">Account Settings</h3>
+                            <p className="text-sm text-gray-600">Update password for {selectedMember.name}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 max-w-md">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                            <input
+                              type="password"
+                              value={passwordData.newPassword}
+                              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                              placeholder="Enter new password"
+                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input
+                              type="password"
+                              value={passwordData.confirmPassword}
+                              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                              placeholder="Confirm new password"
+                              className="w-full px-3 py-2 bg-white border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          
+                          {passwordData.newPassword && passwordData.confirmPassword && (
+                            <div className={`p-3 rounded-lg ${passwordData.newPassword === passwordData.confirmPassword ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                              <p className={`text-sm ${passwordData.newPassword === passwordData.confirmPassword ? 'text-green-700' : 'text-red-700'}`}>
+                                {passwordData.newPassword === passwordData.confirmPassword 
+                                  ? '✓ Passwords match' 
+                                  : '✗ Passwords do not match'}
+                              </p>
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={handleUpdatePassword}
+                            disabled={!passwordData.newPassword || !passwordData.confirmPassword || passwordData.newPassword !== passwordData.confirmPassword || loading.submit}
+                            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {loading.submit ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Key className="w-4 h-4" />
+                            )}
+                            {loading.submit ? 'Updating Password...' : 'Update Password'}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
                   </form>
                 </div>
 
@@ -2044,6 +2131,7 @@ const MembersPage = () => {
                       {currentStep === 1 && 'Enter personal details'}
                       {currentStep === 2 && 'Assign work ID and role'}
                       {currentStep === 3 && 'Assign projects'}
+                      {currentStep === 4 && 'Update account password'}
                     </div>
                     <div className="flex gap-2">
                       {currentStep > 1 && (
@@ -2051,7 +2139,7 @@ const MembersPage = () => {
                           Previous
                         </button>
                       )}
-                      {currentStep < 3 ? (
+                      {currentStep < 4 ? (
                         <button
                           type="button"
                           onClick={() => setCurrentStep(currentStep + 1)}
@@ -2064,18 +2152,20 @@ const MembersPage = () => {
                           Next <ArrowRight className="w-3 h-3" />
                         </button>
                       ) : (
-                        <button
-                          onClick={handleEditMember}
-                          disabled={loading.submit}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
-                        >
-                          {loading.submit ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Pencil className="w-4 h-4" />
-                          )}
-                          {loading.submit ? 'Updating...' : 'Update Member'}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleEditMember}
+                            disabled={loading.submit}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {loading.submit ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Pencil className="w-4 h-4" />
+                            )}
+                            {loading.submit ? 'Updating...' : 'Update Member'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -2086,9 +2176,9 @@ const MembersPage = () => {
         </AnimatePresence>
 
         {/* Add Department Modal */}
-        <AnimatePresence>
-          {isAddDepartmentModalOpen && (
-            <motion.div
+         <AnimatePresence>
+       {isAddDepartmentModalOpen && (
+         <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

@@ -94,7 +94,33 @@ export const AuthProvider = ({ children }) => {
     sessionStorage.setItem('user', JSON.stringify(user));
     setToken(token);
     setUser(user);
+
+    //redirectBasedOnRole(user);
   };
+
+  // const redirectBasedOnRole = (user) =>{
+  //   if(!user || !user.role){
+  //     router.push('/login');
+  //     return;
+  //   }
+
+  //   switch(user.role.toLowerCase()){
+  //     case 'member':
+  //       router.push('/member')
+  //       break;
+  //     case 'admin':
+  //       router.push('/admin');
+  //       break;
+  //     case 'superadmin':
+  //       router.push('/admin');
+  //       break;
+  //     case 'customer':
+  //       router.push('/customer');
+  //       break;
+  //     default:
+  //       router.push('/login');
+  //   }
+  // }
 
   // Function to handle logout
   const logout = () => {
@@ -105,6 +131,10 @@ export const AuthProvider = ({ children }) => {
     // Redirect to login page
     router.replace('/login'); // Use replace to avoid history pollution
   };
+
+  const hasRole = (role) =>{
+    return user?.role?.toLowerCase() === role?.toLowerCase();
+  }
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, refreshAuth }}>

@@ -1,6 +1,7 @@
+'use client'
 import React from 'react'
 
-export const page = () => {
+export const Emailpage = () => {
   return (
     <div>page</div>
   )

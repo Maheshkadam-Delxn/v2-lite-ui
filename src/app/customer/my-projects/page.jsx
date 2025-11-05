@@ -1,7 +1,8 @@
+'use client'
 import React from 'react'
 
-export const page = () => {
+export const MyProjectpage = () => {
   return (
-    <div>page</div>
+    <div>MyProject</div>
   )
 }

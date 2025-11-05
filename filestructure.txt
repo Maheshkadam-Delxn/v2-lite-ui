@@ -102,7 +102,6 @@
         |-- customer
             |-- email
                 |-- page.jsx
-            |-- layout.jsx
             |-- my-projects
                 |-- page.jsx
             |-- page.jsx
